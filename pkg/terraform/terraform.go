@@ -25,7 +25,7 @@ func (tf *Terraform) output(directory string) (map[string]Output, error) {
 	context := &executor.CommandContext{
 		Directory: directory,
 	}
-	commandOutput, err := tf.executor.ExecuteWithContext([]string{"output", "-json"}, context)
+	commandOutput, err := tf.executor.ExecuteAndCapture([]string{"output", "-json"}, context)
 	if err != nil {
 		return nil, err
 	}

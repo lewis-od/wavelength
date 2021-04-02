@@ -1,4 +1,4 @@
-package terraform
+package lerna
 
 import (
 	"github.com/lewis-od/lambda-build/pkg/executor"
@@ -21,28 +21,15 @@ func (e *MockExecutor) ExecuteAndCapture(arguments []string, context *executor.C
 	return args.Get(0).([]byte), args.Error(1)
 }
 
-const dummyOutput string = `
-{
-	"my output": {
-		"sensitive": false,
-		"type": "string",
-		"value": "output value"
-	}
-}
-`
-
-func TestOutput(t *testing.T) {
-	directoryName := "directory"
+func TestBuildLambda(t *testing.T) {
 	mockExecutor := new(MockExecutor)
 	mockExecutor.On(
-		"ExecuteAndCapture",
-		[]string{"output", "-json"},
-		&executor.CommandContext{Directory: directoryName},
-	).Return([]byte(dummyOutput), nil)
+		"Execute",
+		[]string{"run", "build", "--scope", "@project/lambda", "--include-dependencies",
+	}).Return(nil)
+	lerna := NewLerna(mockExecutor, "project")
 
-	tf := NewTerraform(mockExecutor)
-	outputs, err := tf.output(directoryName)
+	err := lerna.BuildLambda("lambda")
 
 	assert.Nil(t, err)
-	assert.Equal(t, outputs["my output"].Value, "output value")
 }

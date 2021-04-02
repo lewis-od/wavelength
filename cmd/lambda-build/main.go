@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/lewis-od/lambda-build/pkg/io/system"
+	"github.com/lewis-od/lambda-build/pkg/lerna"
 	"os"
 
 	"github.com/lewis-od/lambda-build/pkg/command"
@@ -27,6 +29,12 @@ func main() {
 		Version: "0.1",
 	}
 	app := command.NewCLI(config)
+
+	lernaExec := lerna.NewLerna(system.NewExecutor("lerna"), "jarvis")
+	filesystem := &command.OSFilesystem{}
+	buildCommand := command.NewBuildAndUploadCommand(lernaExec, filesystem)
+	app.AddCommand(buildCommand)
+
 	app.AddCommand(&HelloCommand{})
 	app.Run(os.Args)
 }
