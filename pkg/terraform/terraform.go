@@ -5,12 +5,16 @@ import (
 	"github.com/lewis-od/lambda-build/pkg/executor"
 )
 
-type Terraform struct {
+type Terraform interface {
+	Output(directory string) (map[string]Output, error)
+}
+
+type TerraformExecutor struct {
 	executor executor.CommandExecutor
 }
 
-func NewTerraform(executor executor.CommandExecutor) *Terraform {
-	return &Terraform{
+func NewTerraform(executor executor.CommandExecutor) Terraform {
+	return &TerraformExecutor{
 		executor: executor,
 	}
 }
@@ -21,7 +25,7 @@ type Output struct {
 	Value string `json:"value"`
 }
 
-func (tf *Terraform) output(directory string) (map[string]Output, error) {
+func (tf *TerraformExecutor) Output(directory string) (map[string]Output, error) {
 	context := &executor.CommandContext{
 		Directory: directory,
 	}

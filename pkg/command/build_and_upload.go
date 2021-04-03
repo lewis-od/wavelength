@@ -3,19 +3,28 @@ package command
 import (
 	"fmt"
 	"github.com/lewis-od/lambda-build/pkg/lerna"
+	"github.com/lewis-od/lambda-build/pkg/terraform"
 )
 
 type BuildAndUploadCommand struct {
-	lerna lerna.Lerna
-	filesystem Filesystem
-	lambdasDirectory string
+	lerna             lerna.Lerna
+	terraform         terraform.Terraform
+	filesystem        Filesystem
+	lambdasDirectory  string
+	artifactWorkspace string
 }
 
-func NewBuildAndUploadCommand(lerna lerna.Lerna, filesystem Filesystem) *BuildAndUploadCommand {
+func NewBuildAndUploadCommand(
+	lerna lerna.Lerna,
+	terraform terraform.Terraform,
+	filesystem Filesystem,
+) *BuildAndUploadCommand {
 	return &BuildAndUploadCommand{
-		lerna: lerna,
-		filesystem: filesystem,
-		lambdasDirectory: "lambdas",
+		lerna:             lerna,
+		terraform:         terraform,
+		filesystem:        filesystem,
+		lambdasDirectory:  "lambdas",
+		artifactWorkspace: "terraform/deployments/artifact-storage",
 	}
 }
 
@@ -48,6 +57,26 @@ func (c *BuildAndUploadCommand) Run(arguments []string) {
 		fmt.Println(err)
 		return
 	}
+
+	bucketName, err := c.findArtifactBucketName()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println("Uploading to ", bucketName)
+}
+
+func (c *BuildAndUploadCommand) findLambdaNames() (lambdaNames []string, err error) {
+	dirContents, err := c.filesystem.ReadDir(c.lambdasDirectory)
+	if err != nil {
+		return
+	}
+	for _, lambdaDir := range dirContents {
+		if lambdaDir.IsDir() {
+			lambdaNames = append(lambdaNames, lambdaDir.Name())
+		}
+	}
+	return
 }
 
 func contains(target string, items []string) bool {
@@ -75,15 +104,18 @@ func (c *BuildAndUploadCommand) buildLambdas(names []string) error {
 	return nil
 }
 
-func (c *BuildAndUploadCommand) findLambdaNames() (lambdaNames []string, err error) {
-	dirContents, err := c.filesystem.ReadDir(c.lambdasDirectory)
+func (c *BuildAndUploadCommand) findArtifactBucketName() (string, error) {
+	outputs, err := c.terraform.Output(c.artifactWorkspace)
 	if err != nil {
-		return
+		return "", fmt.Errorf("Could not determine name of artifact bucket from tf state\n%s", err)
 	}
-	for _, lambdaDir := range dirContents {
-		if lambdaDir.IsDir() {
-			lambdaNames = append(lambdaNames, lambdaDir.Name())
+	bucketName, outputExists := outputs["bucket_name"]
+	if !outputExists {
+		outputNames := make([]string, 0, len(outputs))
+		for output := range outputs {
+			outputNames = append(outputNames, output)
 		}
+		return "", fmt.Errorf("No output named bucket_name found in %s", outputNames)
 	}
-	return
+	return bucketName.Value, nil
 }

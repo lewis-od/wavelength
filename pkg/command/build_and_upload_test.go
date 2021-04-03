@@ -2,6 +2,7 @@ package command
 
 import (
 	"fmt"
+	"github.com/lewis-od/lambda-build/pkg/terraform"
 	"github.com/stretchr/testify/mock"
 	"os"
 	"testing"
@@ -29,6 +30,15 @@ type MockLerna struct {
 func (m *MockLerna) BuildLambda(lambdaName string) error {
 	args := m.Called(lambdaName)
 	return args.Error(0)
+}
+
+type MockTerraform struct {
+	mock.Mock
+}
+
+func (m *MockTerraform) Output(directory string) (map[string]terraform.Output, error) {
+	args := m.Called(directory)
+	return args.Get(0).(map[string]terraform.Output), args.Error(1)
 }
 
 type FakeFile struct {
@@ -83,7 +93,15 @@ func TestRun_AllLambdas_Success(t *testing.T) {
 	mockLerna.On("BuildLambda", "lambda-one").Return(nil)
 	mockLerna.On("BuildLambda", "lambda-two").Return(nil)
 
-	cmd := NewBuildAndUploadCommand(mockLerna, mockFilesystem)
+	mockTerraform := &MockTerraform{}
+	mockTerraform.On(
+		"Output",
+		"terraform/deployments/artifact-storage",
+	).Return(map[string]terraform.Output{
+		"bucket_name": terraform.Output{Value: "bucket"},
+	}, nil)
+
+	cmd := NewBuildAndUploadCommand(mockLerna, mockTerraform, mockFilesystem)
 	cmd.Run([]string{})
 
 	mockLerna.AssertCalled(t, "BuildLambda", "lambda-one")
@@ -110,7 +128,15 @@ func TestRun_AllLambdas_BuildError(t *testing.T) {
 	mockLerna.On("BuildLambda", "lambda-one").Return(fmt.Errorf("error"))
 	mockLerna.On("BuildLambda", "lambda-two").Return(nil)
 
-	cmd := NewBuildAndUploadCommand(mockLerna, mockFilesystem)
+	mockTerraform := &MockTerraform{}
+	mockTerraform.On(
+		"Output",
+		"terraform/deployments/artifact-storage",
+	).Return(map[string]terraform.Output{
+		"bucket_name": terraform.Output{Value: "bucket"},
+	}, nil)
+
+	cmd := NewBuildAndUploadCommand(mockLerna, mockTerraform, mockFilesystem)
 	cmd.Run([]string{})
 
 	mockLerna.AssertCalled(t, "BuildLambda", "lambda-one")
@@ -135,7 +161,15 @@ func TestRun_AllLambdas_ArtifactNotFound(t *testing.T) {
 	mockLerna := new(MockLerna)
 	mockLerna.On("BuildLambda", "lambda-one").Return(nil)
 
-	cmd := NewBuildAndUploadCommand(mockLerna, mockFilesystem)
+	mockTerraform := &MockTerraform{}
+	mockTerraform.On(
+		"Output",
+		"terraform/deployments/artifact-storage",
+	).Return(map[string]terraform.Output{
+		"bucket_name": terraform.Output{Value: "bucket"},
+	}, nil)
+
+	cmd := NewBuildAndUploadCommand(mockLerna, mockTerraform, mockFilesystem)
 	cmd.Run([]string{})
 
 	mockLerna.AssertCalled(t, "BuildLambda", "lambda-one")
@@ -159,7 +193,15 @@ func TestRun_SingleLambda_Success(t *testing.T) {
 	mockLerna := new(MockLerna)
 	mockLerna.On("BuildLambda", lambdaName).Return(nil)
 
-	cmd := NewBuildAndUploadCommand(mockLerna, mockFilesystem)
+	mockTerraform := &MockTerraform{}
+	mockTerraform.On(
+		"Output",
+		"terraform/deployments/artifact-storage",
+	).Return(map[string]terraform.Output{
+		"bucket_name": terraform.Output{Value: "bucket"},
+	}, nil)
+
+	cmd := NewBuildAndUploadCommand(mockLerna, mockTerraform, mockFilesystem)
 	cmd.Run([]string{lambdaName})
 
 	mockLerna.AssertCalled(t, "BuildLambda", "lambda-name")
