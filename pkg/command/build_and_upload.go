@@ -8,12 +8,14 @@ import (
 type BuildAndUploadCommand struct {
 	lerna lerna.Lerna
 	filesystem Filesystem
+	lambdasDirectory string
 }
 
 func NewBuildAndUploadCommand(lerna lerna.Lerna, filesystem Filesystem) *BuildAndUploadCommand {
 	return &BuildAndUploadCommand{
 		lerna: lerna,
 		filesystem: filesystem,
+		lambdasDirectory: "lambdas",
 	}
 }
 
@@ -26,10 +28,9 @@ func (c *BuildAndUploadCommand) Description() string {
 }
 
 func (c *BuildAndUploadCommand) Run(arguments []string) {
-	lambdasDir := "lambdas"
-	lambdaNames, err := c.findLambdaNames(lambdasDir)
+	lambdaNames, err := c.findLambdaNames()
 	if err != nil {
-		fmt.Printf("Unable to read directory %s\n", lambdasDir)
+		fmt.Printf("Unable to read directory %s\n", c.lambdasDirectory)
 		return
 	}
 
@@ -65,13 +66,17 @@ func (c *BuildAndUploadCommand) buildLambdas(names []string) error {
 		if err != nil {
 			return fmt.Errorf("❌ Error building %s\n%s\n", lambdaName, err)
 		}
+		artifactPath := fmt.Sprintf("%s/%s/dist/%s.zip", c.lambdasDirectory, lambdaName, lambdaName)
+		if !c.filesystem.FileExists(artifactPath) {
+			return fmt.Errorf("❌ Artifact %s not found, did the build succeed?", artifactPath)
+		}
 	}
 	fmt.Println("✅ Done")
 	return nil
 }
 
-func (c *BuildAndUploadCommand) findLambdaNames(lambdasDir string) (lambdaNames []string, err error) {
-	dirContents, err := c.filesystem.ReadDir(lambdasDir)
+func (c *BuildAndUploadCommand) findLambdaNames() (lambdaNames []string, err error) {
+	dirContents, err := c.filesystem.ReadDir(c.lambdasDirectory)
 	if err != nil {
 		return
 	}

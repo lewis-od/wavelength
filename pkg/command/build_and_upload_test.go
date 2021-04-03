@@ -17,6 +17,11 @@ func (m *MockFilesystem) ReadDir(dirname string) ([]os.FileInfo, error) {
 	return args.Get(0).([]os.FileInfo), args.Error(1)
 }
 
+func (m *MockFilesystem) FileExists(filename string) bool {
+	args := m.Called(filename)
+	return args.Bool(0)
+}
+
 type MockLerna struct {
 	mock.Mock
 }
@@ -65,6 +70,14 @@ func TestRun_AllLambdas_Success(t *testing.T) {
 		"ReadDir",
 		"lambdas",
 	).Return([]os.FileInfo{lambdaOneDirectory, lambdaTwoDirectory, otherFile}, nil)
+	mockFilesystem.On(
+		"FileExists",
+		"lambdas/lambda-one/dist/lambda-one.zip",
+	).Return(true)
+	mockFilesystem.On(
+		"FileExists",
+		"lambdas/lambda-two/dist/lambda-two.zip",
+	).Return(true)
 
 	mockLerna := new(MockLerna)
 	mockLerna.On("BuildLambda", "lambda-one").Return(nil)
@@ -78,7 +91,7 @@ func TestRun_AllLambdas_Success(t *testing.T) {
 	mockLerna.AssertNotCalled(t, "BuildLambda", "some-file")
 }
 
-func TestRun_AllLambdas_OneError(t *testing.T) {
+func TestRun_AllLambdas_BuildError(t *testing.T) {
 	lambdaOneDirectory := &FakeFile{name: "lambda-one", isDir: true}
 	lambdaTwoDirectory := &FakeFile{name: "lambda-two", isDir: true}
 	otherFile := &FakeFile{name: "some-file", isDir: false}
@@ -88,6 +101,10 @@ func TestRun_AllLambdas_OneError(t *testing.T) {
 		"ReadDir",
 		"lambdas",
 	).Return([]os.FileInfo{lambdaOneDirectory, lambdaTwoDirectory, otherFile}, nil)
+	mockFilesystem.On(
+		"FileExists",
+		"lambdas/lambda-one/dist/lambda-one.zip",
+	).Return(true)
 
 	mockLerna := new(MockLerna)
 	mockLerna.On("BuildLambda", "lambda-one").Return(fmt.Errorf("error"))
@@ -101,7 +118,31 @@ func TestRun_AllLambdas_OneError(t *testing.T) {
 	mockLerna.AssertNotCalled(t, "BuildLambda", "some-file")
 }
 
-func TestRun_SingleLambdas_Success(t *testing.T) {
+func TestRun_AllLambdas_ArtifactNotFound(t *testing.T) {
+	lambdaOneDirectory := &FakeFile{name: "lambda-one", isDir: true}
+	lambdaTwoDirectory := &FakeFile{name: "lambda-two", isDir: true}
+
+	mockFilesystem := new(MockFilesystem)
+	mockFilesystem.On(
+		"ReadDir",
+		"lambdas",
+	).Return([]os.FileInfo{lambdaOneDirectory, lambdaTwoDirectory}, nil)
+	mockFilesystem.On(
+		"FileExists",
+		"lambdas/lambda-one/dist/lambda-one.zip",
+	).Return(false)
+
+	mockLerna := new(MockLerna)
+	mockLerna.On("BuildLambda", "lambda-one").Return(nil)
+
+	cmd := NewBuildAndUploadCommand(mockLerna, mockFilesystem)
+	cmd.Run([]string{})
+
+	mockLerna.AssertCalled(t, "BuildLambda", "lambda-one")
+	mockLerna.AssertNotCalled(t, "BuildLambda", "lambda-two")
+}
+
+func TestRun_SingleLambda_Success(t *testing.T) {
 	lambdaName := "lambda-name"
 	lambdaOneDirectory := &FakeFile{name: lambdaName, isDir: true}
 
@@ -110,6 +151,10 @@ func TestRun_SingleLambdas_Success(t *testing.T) {
 		"ReadDir",
 		"lambdas",
 	).Return([]os.FileInfo{lambdaOneDirectory}, nil)
+	mockFilesystem.On(
+		"FileExists",
+		"lambdas/lambda-name/dist/lambda-name.zip",
+	).Return(true)
 
 	mockLerna := new(MockLerna)
 	mockLerna.On("BuildLambda", lambdaName).Return(nil)

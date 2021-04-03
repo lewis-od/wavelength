@@ -31,7 +31,7 @@ func main() {
 	app := command.NewCLI(config)
 
 	lernaExec := lerna.NewLerna(system.NewExecutor("lerna"), "jarvis")
-	filesystem := &command.OSFilesystem{}
+	filesystem := &system.OSFilesystem{}
 	buildCommand := command.NewBuildAndUploadCommand(lernaExec, filesystem)
 	app.AddCommand(buildCommand)
 
