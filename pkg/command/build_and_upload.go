@@ -2,28 +2,27 @@ package command
 
 import (
 	"fmt"
-	"github.com/lewis-od/lambda-build/pkg/lerna"
+	"github.com/lewis-od/lambda-build/pkg/builder"
+	"github.com/lewis-od/lambda-build/pkg/io"
 	"github.com/lewis-od/lambda-build/pkg/terraform"
 )
 
 type BuildAndUploadCommand struct {
-	lerna             lerna.Lerna
+	orchestrator      builder.Orchestrator
 	terraform         terraform.Terraform
-	filesystem        Filesystem
-	lambdasDirectory  string
+	out               io.Printer
 	artifactWorkspace string
 }
 
 func NewBuildAndUploadCommand(
-	lerna lerna.Lerna,
+	orchestrator builder.Orchestrator,
 	terraform terraform.Terraform,
-	filesystem Filesystem,
+	out io.Printer,
 ) *BuildAndUploadCommand {
 	return &BuildAndUploadCommand{
-		lerna:             lerna,
+		orchestrator:      orchestrator,
 		terraform:         terraform,
-		filesystem:        filesystem,
-		lambdasDirectory:  "lambdas",
+		out:               out,
 		artifactWorkspace: "terraform/deployments/artifact-storage",
 	}
 }
@@ -37,71 +36,18 @@ func (c *BuildAndUploadCommand) Description() string {
 }
 
 func (c *BuildAndUploadCommand) Run(arguments []string) {
-	lambdaNames, err := c.findLambdaNames()
+	err := c.orchestrator.RunBuild(arguments)
 	if err != nil {
-		fmt.Printf("Unable to read directory %s\n", c.lambdasDirectory)
-		return
-	}
-
-	if len(arguments) == 0 {
-		err = c.buildLambdas(lambdaNames)
-	} else {
-		lambdaName := arguments[0]
-		if !contains(lambdaName, lambdaNames) {
-			fmt.Printf("Lambda not found: %s\n", lambdaName)
-			return
-		}
-		err = c.buildLambdas([]string{lambdaName})
-	}
-	if err != nil {
-		fmt.Println(err)
+		c.out.Println("❌", err)
 		return
 	}
 
 	bucketName, err := c.findArtifactBucketName()
 	if err != nil {
-		fmt.Println(err)
+		c.out.Println(err)
 		return
 	}
-	fmt.Println("Uploading to ", bucketName)
-}
-
-func (c *BuildAndUploadCommand) findLambdaNames() (lambdaNames []string, err error) {
-	dirContents, err := c.filesystem.ReadDir(c.lambdasDirectory)
-	if err != nil {
-		return
-	}
-	for _, lambdaDir := range dirContents {
-		if lambdaDir.IsDir() {
-			lambdaNames = append(lambdaNames, lambdaDir.Name())
-		}
-	}
-	return
-}
-
-func contains(target string, items []string) bool {
-	for _, item := range items {
-		if item == target {
-			return true
-		}
-	}
-	return false
-}
-
-func (c *BuildAndUploadCommand) buildLambdas(names []string) error {
-	for _, lambdaName := range names {
-		fmt.Printf("🔨 Building %s lambda...\n", lambdaName)
-		err := c.lerna.BuildLambda(lambdaName)
-		if err != nil {
-			return fmt.Errorf("❌ Error building %s\n%s\n", lambdaName, err)
-		}
-		artifactPath := fmt.Sprintf("%s/%s/dist/%s.zip", c.lambdasDirectory, lambdaName, lambdaName)
-		if !c.filesystem.FileExists(artifactPath) {
-			return fmt.Errorf("❌ Artifact %s not found, did the build succeed?", artifactPath)
-		}
-	}
-	fmt.Println("✅ Done")
-	return nil
+	c.out.Println("Uploading to", bucketName)
 }
 
 func (c *BuildAndUploadCommand) findArtifactBucketName() (string, error) {

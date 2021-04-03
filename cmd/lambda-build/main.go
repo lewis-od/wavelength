@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/lewis-od/lambda-build/pkg/io/system"
-	"github.com/lewis-od/lambda-build/pkg/lerna"
+	"github.com/lewis-od/lambda-build/pkg/builder"
+	"github.com/lewis-od/lambda-build/pkg/command"
+	"github.com/lewis-od/lambda-build/pkg/ports/lerna"
+	"github.com/lewis-od/lambda-build/pkg/ports/stdout"
+	"github.com/lewis-od/lambda-build/pkg/ports/system"
 	"github.com/lewis-od/lambda-build/pkg/terraform"
 	"os"
-
-	"github.com/lewis-od/lambda-build/pkg/command"
 )
 
 func main() {
@@ -16,10 +17,13 @@ func main() {
 	}
 	app := command.NewCLI(config)
 
-	lernaExec := lerna.NewLerna(system.NewExecutor("lerna"), "jarvis")
-	tfExec := terraform.NewTerraform(system.NewExecutor("terraform"))
+	printer := stdout.NewPrinter()
 	filesystem := &system.OSFilesystem{}
-	buildCommand := command.NewBuildAndUploadCommand(lernaExec, tfExec, filesystem)
+	lernaBuilder := lerna.NewLerna(system.NewExecutor("lerna"), "jarvis")
+	orchestrator := builder.NewOrchestrator(lernaBuilder, filesystem, printer)
+	tfExec := terraform.NewTerraform(system.NewExecutor("terraform"))
+	buildCommand := command.NewBuildAndUploadCommand(orchestrator, tfExec, printer)
+
 	app.AddCommand(buildCommand)
 
 	app.Run(os.Args)

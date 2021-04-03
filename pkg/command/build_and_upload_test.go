@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"os"
 	"testing"
-	"time"
 )
 
 type MockFilesystem struct {
@@ -23,15 +22,6 @@ func (m *MockFilesystem) FileExists(filename string) bool {
 	return args.Bool(0)
 }
 
-type MockLerna struct {
-	mock.Mock
-}
-
-func (m *MockLerna) BuildLambda(lambdaName string) error {
-	args := m.Called(lambdaName)
-	return args.Error(0)
-}
-
 type MockTerraform struct {
 	mock.Mock
 }
@@ -41,168 +31,91 @@ func (m *MockTerraform) Output(directory string) (map[string]terraform.Output, e
 	return args.Get(0).(map[string]terraform.Output), args.Error(1)
 }
 
-type FakeFile struct {
-	name string
-	isDir bool
+type MockOrchestrator struct {
+	mock.Mock
 }
 
-func (f *FakeFile) Name() string {
-	return f.name
+func (m *MockOrchestrator) RunBuild(specifiedLambdas []string) error {
+	args := m.Called(specifiedLambdas)
+	return args.Error(0)
 }
 
-func (f *FakeFile) Size() int64 {
-	return 1
+type MockPrinter struct {
+	mock.Mock
 }
 
-func (f *FakeFile) Mode() os.FileMode {
-	return os.ModeDir
+func (n *MockPrinter) Println(a ...interface{}) {
+	n.Called(a)
 }
 
-func (f *FakeFile) ModTime() time.Time {
-	return time.Now()
+func (n *MockPrinter) Printlnf(format string, a ...interface{}) {
+	n.Called(format, a)
 }
 
-func (f *FakeFile) IsDir() bool {
-	return f.isDir
-}
+func TestRun_Success(t *testing.T) {
+	arguments := []string{"one", "two"}
 
-func (f *FakeFile) Sys() interface{} {
-	return ""
-}
+	orchestrator := new(MockOrchestrator)
+	orchestrator.On("RunBuild", arguments).Return(nil)
 
-func TestRun_AllLambdas_Success(t *testing.T) {
-	lambdaOneDirectory := &FakeFile{name: "lambda-one", isDir: true}
-	lambdaTwoDirectory := &FakeFile{name: "lambda-two", isDir: true}
-	otherFile := &FakeFile{name: "some-file", isDir: false}
-
-	mockFilesystem := new(MockFilesystem)
-	mockFilesystem.On(
-		"ReadDir",
-		"lambdas",
-	).Return([]os.FileInfo{lambdaOneDirectory, lambdaTwoDirectory, otherFile}, nil)
-	mockFilesystem.On(
-		"FileExists",
-		"lambdas/lambda-one/dist/lambda-one.zip",
-	).Return(true)
-	mockFilesystem.On(
-		"FileExists",
-		"lambdas/lambda-two/dist/lambda-two.zip",
-	).Return(true)
-
-	mockLerna := new(MockLerna)
-	mockLerna.On("BuildLambda", "lambda-one").Return(nil)
-	mockLerna.On("BuildLambda", "lambda-two").Return(nil)
-
-	mockTerraform := &MockTerraform{}
-	mockTerraform.On(
+	tf := new(MockTerraform)
+	tf.On(
 		"Output",
 		"terraform/deployments/artifact-storage",
-	).Return(map[string]terraform.Output{
-		"bucket_name": terraform.Output{Value: "bucket"},
-	}, nil)
+	).Return(map[string]terraform.Output{"bucket_name": terraform.Output{Value: "some-bucket"}}, nil)
 
-	cmd := NewBuildAndUploadCommand(mockLerna, mockTerraform, mockFilesystem)
-	cmd.Run([]string{})
+	printer := new(MockPrinter)
+	printer.On("Println", mock.Anything).Return()
 
-	mockLerna.AssertCalled(t, "BuildLambda", "lambda-one")
-	mockLerna.AssertCalled(t, "BuildLambda", "lambda-two")
-	mockLerna.AssertNotCalled(t, "BuildLambda", "some-file")
+	command := NewBuildAndUploadCommand(orchestrator, tf, printer)
+	command.Run(arguments)
+
+	orchestrator.AssertExpectations(t)
+	tf.AssertExpectations(t)
+	printer.AssertExpectations(t)
 }
 
-func TestRun_AllLambdas_BuildError(t *testing.T) {
-	lambdaOneDirectory := &FakeFile{name: "lambda-one", isDir: true}
-	lambdaTwoDirectory := &FakeFile{name: "lambda-two", isDir: true}
-	otherFile := &FakeFile{name: "some-file", isDir: false}
+func TestRun_OrchestratorError(t *testing.T) {
+	arguments := []string{"one", "two"}
 
-	mockFilesystem := new(MockFilesystem)
-	mockFilesystem.On(
-		"ReadDir",
-		"lambdas",
-	).Return([]os.FileInfo{lambdaOneDirectory, lambdaTwoDirectory, otherFile}, nil)
-	mockFilesystem.On(
-		"FileExists",
-		"lambdas/lambda-one/dist/lambda-one.zip",
-	).Return(true)
+	orchestrator := new(MockOrchestrator)
+	err := fmt.Errorf("Error text")
+	orchestrator.On("RunBuild", arguments).Return(err)
 
-	mockLerna := new(MockLerna)
-	mockLerna.On("BuildLambda", "lambda-one").Return(fmt.Errorf("error"))
-	mockLerna.On("BuildLambda", "lambda-two").Return(nil)
+	tf := new(MockTerraform)
 
-	mockTerraform := &MockTerraform{}
-	mockTerraform.On(
-		"Output",
-		"terraform/deployments/artifact-storage",
-	).Return(map[string]terraform.Output{
-		"bucket_name": terraform.Output{Value: "bucket"},
-	}, nil)
+	printer := new(MockPrinter)
+	printer.On("Println", []interface{}{"❌", err}).Return()
 
-	cmd := NewBuildAndUploadCommand(mockLerna, mockTerraform, mockFilesystem)
-	cmd.Run([]string{})
+	command := NewBuildAndUploadCommand(orchestrator, tf, printer)
+	command.Run(arguments)
 
-	mockLerna.AssertCalled(t, "BuildLambda", "lambda-one")
-	mockLerna.AssertNotCalled(t, "BuildLambda", "lambda-two")
-	mockLerna.AssertNotCalled(t, "BuildLambda", "some-file")
+	orchestrator.AssertExpectations(t)
+	tf.AssertExpectations(t)
+	printer.AssertExpectations(t)
 }
 
-func TestRun_AllLambdas_ArtifactNotFound(t *testing.T) {
-	lambdaOneDirectory := &FakeFile{name: "lambda-one", isDir: true}
-	lambdaTwoDirectory := &FakeFile{name: "lambda-two", isDir: true}
+func TestRun_TerraformError(t *testing.T) {
+	arguments := []string{"one", "two"}
 
-	mockFilesystem := new(MockFilesystem)
-	mockFilesystem.On(
-		"ReadDir",
-		"lambdas",
-	).Return([]os.FileInfo{lambdaOneDirectory, lambdaTwoDirectory}, nil)
-	mockFilesystem.On(
-		"FileExists",
-		"lambdas/lambda-one/dist/lambda-one.zip",
-	).Return(false)
+	orchestrator := new(MockOrchestrator)
+	orchestrator.On("RunBuild", arguments).Return(nil)
 
-	mockLerna := new(MockLerna)
-	mockLerna.On("BuildLambda", "lambda-one").Return(nil)
-
-	mockTerraform := &MockTerraform{}
-	mockTerraform.On(
+	tf := new(MockTerraform)
+	err := fmt.Errorf("error")
+	tf.On(
 		"Output",
 		"terraform/deployments/artifact-storage",
-	).Return(map[string]terraform.Output{
-		"bucket_name": terraform.Output{Value: "bucket"},
-	}, nil)
+	).Return(map[string]terraform.Output{}, err)
 
-	cmd := NewBuildAndUploadCommand(mockLerna, mockTerraform, mockFilesystem)
-	cmd.Run([]string{})
+	printer := new(MockPrinter)
+	expectedError := fmt.Errorf("Could not determine name of artifact bucket from tf state\n%s", err)
+	printer.On("Println", []interface{}{expectedError}).Return()
 
-	mockLerna.AssertCalled(t, "BuildLambda", "lambda-one")
-	mockLerna.AssertNotCalled(t, "BuildLambda", "lambda-two")
-}
+	command := NewBuildAndUploadCommand(orchestrator, tf, printer)
+	command.Run(arguments)
 
-func TestRun_SingleLambda_Success(t *testing.T) {
-	lambdaName := "lambda-name"
-	lambdaOneDirectory := &FakeFile{name: lambdaName, isDir: true}
-
-	mockFilesystem := new(MockFilesystem)
-	mockFilesystem.On(
-		"ReadDir",
-		"lambdas",
-	).Return([]os.FileInfo{lambdaOneDirectory}, nil)
-	mockFilesystem.On(
-		"FileExists",
-		"lambdas/lambda-name/dist/lambda-name.zip",
-	).Return(true)
-
-	mockLerna := new(MockLerna)
-	mockLerna.On("BuildLambda", lambdaName).Return(nil)
-
-	mockTerraform := &MockTerraform{}
-	mockTerraform.On(
-		"Output",
-		"terraform/deployments/artifact-storage",
-	).Return(map[string]terraform.Output{
-		"bucket_name": terraform.Output{Value: "bucket"},
-	}, nil)
-
-	cmd := NewBuildAndUploadCommand(mockLerna, mockTerraform, mockFilesystem)
-	cmd.Run([]string{lambdaName})
-
-	mockLerna.AssertCalled(t, "BuildLambda", "lambda-name")
+	orchestrator.AssertExpectations(t)
+	tf.AssertExpectations(t)
+	printer.AssertExpectations(t)
 }
