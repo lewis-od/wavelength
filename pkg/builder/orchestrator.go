@@ -6,72 +6,53 @@ import (
 )
 
 type Orchestrator interface {
-	RunBuild(specifiedLambdas []string) error
+	RunBuild(version string, bucketName string, specifiedLambdas []string) error
 }
 
 type orchestrator struct {
-	builder    Builder
-	filesystem io.Filesystem
-	out        io.Printer
-	lambdasDir string
+	builder  Builder
+	uploader Uploader
+	out      io.Printer
 }
 
-func NewOrchestrator(builder Builder, filesystem io.Filesystem, out io.Printer) Orchestrator {
+func NewOrchestrator(builder Builder, uploader Uploader, out io.Printer) Orchestrator {
 	return &orchestrator{
-		builder:    builder,
-		filesystem: filesystem,
-		out: out,
-		lambdasDir: "lambdas",
+		builder:  builder,
+		uploader: uploader,
+		out:      out,
 	}
 }
 
-func (o *orchestrator) RunBuild(specifiedLambdas []string) error {
-	allLambdas, err := o.findLambdaNames()
+func (o *orchestrator) RunBuild(version, bucketName string, lambdasToBuild []string) error {
+	err := o.buildLambdas(lambdasToBuild)
 	if err != nil {
-		return fmt.Errorf("Unable to find directory %s", o.lambdasDir)
+		return err
 	}
 
-	var lambdasToBuild []string
-	if len(specifiedLambdas) > 0 {
-		for _, lambda := range specifiedLambdas {
-			if !contains(lambda, allLambdas) {
-				return fmt.Errorf("Unable to find lambda %s", lambda)
-			}
-		}
-		lambdasToBuild = specifiedLambdas
-	} else {
-		lambdasToBuild = allLambdas
-	}
+	return o.uploadLambdas(version, bucketName, lambdasToBuild)
+}
 
-	for _, lambda := range lambdasToBuild {
+func (o *orchestrator) buildLambdas(lambdas []string) error {
+	for _, lambda := range lambdas {
 		o.out.Printlnf("🔨 Building %s...", lambda)
 		err := o.builder.BuildLambda(lambda)
 		if err != nil {
 			return fmt.Errorf("Error building %s", lambda)
 		}
 	}
-	o.out.Printlnf("✅ Done")
+	o.out.Printlnf("✅ Build complete")
 	return nil
 }
 
-func (o *orchestrator) findLambdaNames() (lambdaNames []string, err error) {
-	dirContents, err := o.filesystem.ReadDir(o.lambdasDir)
-	if err != nil {
-		return
-	}
-	for _, lambdaDir := range dirContents {
-		if lambdaDir.IsDir() {
-			lambdaNames = append(lambdaNames, lambdaDir.Name())
+func (o *orchestrator) uploadLambdas(version, bucketName string, lambdas []string) error {
+	for _, lambda := range lambdas {
+		artifact := fmt.Sprintf("lambdas/%s/dist/%s.zip", lambda, lambda)
+		o.out.Printlnf("☁️  Uploading %s...", lambda)
+		err := o.uploader.UploadLambda(version, bucketName, lambda, artifact)
+		if err != nil {
+			return fmt.Errorf("Error uploading lambda %s\n%s", lambda, err)
 		}
 	}
-	return
-}
-
-func contains(target string, items []string) bool {
-	for _, item := range items {
-		if item == target {
-			return true
-		}
-	}
-	return false
+	o.out.Println("✅ Upload complete")
+	return nil
 }

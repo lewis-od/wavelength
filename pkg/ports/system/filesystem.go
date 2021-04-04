@@ -1,14 +1,27 @@
 package system
 
 import (
+	"github.com/lewis-od/lambda-build/pkg/io"
 	"io/ioutil"
 	"os"
 )
 
-type OSFilesystem struct {}
+type OSFilesystem struct{}
 
-func (fs *OSFilesystem) ReadDir(dirname string) ([]os.FileInfo, error) {
-	return ioutil.ReadDir(dirname)
+func (fs *OSFilesystem) ReadDir(dirname string) ([]io.FileInfo, error) {
+	results, err := ioutil.ReadDir(dirname)
+	if err != nil {
+		return nil, err
+	}
+
+	info := make([]io.FileInfo, len(results))
+	for i, result := range results {
+		info[i] = io.FileInfo{
+			Name:  result.Name(),
+			IsDir: result.IsDir(),
+		}
+	}
+	return info, nil
 }
 
 func (fs *OSFilesystem) FileExists(filename string) bool {

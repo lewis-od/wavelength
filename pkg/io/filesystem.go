@@ -1,10 +1,11 @@
 package io
 
-import (
-	"os"
-)
+type FileInfo struct {
+	Name  string
+	IsDir bool
+}
 
 type Filesystem interface {
-	ReadDir(dirname string) ([]os.FileInfo, error)
+	ReadDir(dirname string) ([]FileInfo, error)
 	FileExists(filename string) bool
 }
