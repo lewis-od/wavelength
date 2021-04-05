@@ -6,17 +6,17 @@ import (
 	"os/exec"
 )
 
-type Executor struct {
+type sysExecutor struct {
 	command string
 }
 
-func NewExecutor(command string) *Executor {
-	return &Executor{
+func NewExecutor(command string) executor.CommandExecutor {
+	return &sysExecutor{
 		command: command,
 	}
 }
 
-func (se *Executor) Execute(args []string) (err error) {
+func (se *sysExecutor) Execute(args []string) (err error) {
 	cmd := exec.Command(se.command, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -24,7 +24,7 @@ func (se *Executor) Execute(args []string) (err error) {
 	return
 }
 
-func (se *Executor) ExecuteAndCapture(args []string, context *executor.CommandContext) ([]byte, error) {
+func (se *sysExecutor) ExecuteAndCapture(args []string, context *executor.CommandContext) ([]byte, error) {
 	cmd := exec.Command(se.command, args...)
 	if context.Directory != "" {
 		cmd.Dir = context.Directory

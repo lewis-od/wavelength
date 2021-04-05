@@ -6,9 +6,13 @@ import (
 	"os"
 )
 
-type OSFilesystem struct{}
+type osFilesystem struct{}
 
-func (fs *OSFilesystem) ReadDir(dirname string) ([]io.FileInfo, error) {
+func NewFilesystem() io.Filesystem {
+	return &osFilesystem{}
+}
+
+func (fs *osFilesystem) ReadDir(dirname string) ([]io.FileInfo, error) {
 	results, err := ioutil.ReadDir(dirname)
 	if err != nil {
 		return nil, err
@@ -24,7 +28,7 @@ func (fs *OSFilesystem) ReadDir(dirname string) ([]io.FileInfo, error) {
 	return info, nil
 }
 
-func (fs *OSFilesystem) FileExists(filename string) bool {
+func (fs *osFilesystem) FileExists(filename string) bool {
 	_, err := os.Stat(filename)
 	return err == nil
 }

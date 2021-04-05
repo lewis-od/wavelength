@@ -9,12 +9,12 @@ type Terraform interface {
 	Output(directory string) (map[string]Output, error)
 }
 
-type TerraformExecutor struct {
+type tfExecutor struct {
 	executor executor.CommandExecutor
 }
 
 func NewTerraform(executor executor.CommandExecutor) Terraform {
-	return &TerraformExecutor{
+	return &tfExecutor{
 		executor: executor,
 	}
 }
@@ -25,7 +25,7 @@ type Output struct {
 	Value string `json:"value"`
 }
 
-func (tf *TerraformExecutor) Output(directory string) (map[string]Output, error) {
+func (tf *tfExecutor) Output(directory string) (map[string]Output, error) {
 	context := &executor.CommandContext{
 		Directory: directory,
 	}

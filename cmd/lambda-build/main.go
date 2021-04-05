@@ -27,7 +27,7 @@ func main() {
 	lambdaUploader := aws.NewS3Uploader(newS3Client(awsContext), awsContext)
 	orchestrator := builder.NewOrchestrator(lernaBuilder, lambdaUploader, printer)
 	tfExec := terraform.NewTerraform(system.NewExecutor("terraform"))
-	filesystem := &system.OSFilesystem{}
+	filesystem := system.NewFilesystem()
 	buildCommand := command.NewBuildAndUploadCommand(orchestrator, tfExec, filesystem, printer)
 
 	app.AddCommand(buildCommand)
