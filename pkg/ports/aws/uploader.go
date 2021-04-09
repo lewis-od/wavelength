@@ -14,19 +14,19 @@ type S3PutObjectAPI interface {
 		optFns ...func(*s3.Options)) (*s3.PutObjectOutput, error)
 }
 
-type S3Uploader struct {
+type s3Uploader struct {
 	client S3PutObjectAPI
 	ctx    context.Context
 }
 
 func NewS3Uploader(client S3PutObjectAPI, ctx context.Context) builder.Uploader {
-	return &S3Uploader{
+	return &s3Uploader{
 		client: client,
 		ctx:    ctx,
 	}
 }
 
-func (s *S3Uploader) UploadLambda(version, bucketName, lambdaName, artifactLocation string) error {
+func (s *s3Uploader) UploadLambda(version, bucketName, lambdaName, artifactLocation string) error {
 	uploadLocation := fmt.Sprintf("%s/%s.zip", version, lambdaName)
 
 	file, err := os.Open(artifactLocation)
