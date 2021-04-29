@@ -37,14 +37,6 @@ func NewBuildAndUploadCommand(
 	}
 }
 
-func (c *buildAndUploadCommand) Name() string {
-	return "upload"
-}
-
-func (c *buildAndUploadCommand) Description() string {
-	return "Build and upload to S3"
-}
-
 func (c *buildAndUploadCommand) Run(args []string) {
 	arguments, err := c.parseArguments(args)
 	if err != nil {
@@ -89,9 +81,6 @@ func (c *buildAndUploadCommand) parseArguments(args []string) (*uploadArguments,
 		return nil, err
 	}
 
-	if len(args) < 1 {
-		return &uploadArguments{}, fmt.Errorf("Version not specified")
-	}
 	version := args[0]
 
 	providedNames := args[1:]
