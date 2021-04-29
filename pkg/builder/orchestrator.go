@@ -32,7 +32,7 @@ func (o *orchestrator) BuildLambdas(lambdas []string) error {
 			return fmt.Errorf("Error building %s", lambda)
 		}
 	}
-	o.out.Printlnf("✅ Build complete")
+	o.out.Println("✅ Build complete")
 	return nil
 }
 
