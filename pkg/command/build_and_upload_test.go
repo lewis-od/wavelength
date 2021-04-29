@@ -52,6 +52,10 @@ func (n *mockPrinter) Printlnf(format string, a ...interface{}) {
 	n.Called(format, a)
 }
 
+func (n *mockPrinter) PrintErr(err error) {
+	n.Called(err)
+}
+
 func TestRun_Success(t *testing.T) {
 	arguments := []string{"version", "one", "two"}
 	bucketName := "some-bucket"
@@ -110,7 +114,7 @@ func TestRun_OrchestratorError(t *testing.T) {
 	printer := new(mockPrinter)
 	printer.On("Printlnf", "🏗  Building version %s of %s", []interface{}{version, lambdas}).Return()
 	printer.On("Printlnf", "🪣 Found artifact bucket %s", []interface{}{bucketName}).Return()
-	printer.On("Println", []interface{}{"❌", err}).Return()
+	printer.On("PrintErr", err).Return()
 
 	command := NewBuildAndUploadCommand(orchestrator, tf, filesystem, printer)
 	command.Run(arguments)
@@ -143,7 +147,7 @@ func TestRun_TerraformError(t *testing.T) {
 	printer := new(mockPrinter)
 	printer.On("Printlnf", "🏗  Building version %s of %s", []interface{}{version, lambdas}).Return()
 	expectedError := fmt.Errorf("Could not determine name of artifact bucket from tf state\n%s", err)
-	printer.On("Println", []interface{}{"❌", expectedError}).Return()
+	printer.On("PrintErr", expectedError).Return()
 
 	command := NewBuildAndUploadCommand(orchestrator, tf, filesystem, printer)
 	command.Run(arguments)

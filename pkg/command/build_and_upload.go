@@ -7,7 +7,7 @@ import (
 	"github.com/lewis-od/lambda-build/pkg/terraform"
 )
 
-type BuildAndUploadCommand struct {
+type buildAndUploadCommand struct {
 	orchestrator      builder.Orchestrator
 	terraform         terraform.Terraform
 	filesystem        io.Filesystem
@@ -26,8 +26,8 @@ func NewBuildAndUploadCommand(
 	terraform terraform.Terraform,
 	filesystem io.Filesystem,
 	out io.Printer,
-) *BuildAndUploadCommand {
-	return &BuildAndUploadCommand{
+) Command {
+	return &buildAndUploadCommand{
 		orchestrator:      orchestrator,
 		terraform:         terraform,
 		filesystem:        filesystem,
@@ -37,41 +37,37 @@ func NewBuildAndUploadCommand(
 	}
 }
 
-func (c *BuildAndUploadCommand) Name() string {
+func (c *buildAndUploadCommand) Name() string {
 	return "upload"
 }
 
-func (c *BuildAndUploadCommand) Description() string {
+func (c *buildAndUploadCommand) Description() string {
 	return "Build and upload to S3"
 }
 
-func (c *BuildAndUploadCommand) Run(args []string) {
+func (c *buildAndUploadCommand) Run(args []string) {
 	arguments, err := c.parseArguments(args)
 	if err != nil {
-		c.printError(err)
+		c.out.PrintErr(err)
 		return
 	}
 	c.out.Printlnf("🏗  Building version %s of %s", arguments.version, arguments.lambdas)
 
 	bucketName, err := c.findArtifactBucketName()
 	if err != nil {
-		c.printError(err)
+		c.out.PrintErr(err)
 		return
 	}
 	c.out.Printlnf("🪣 Found artifact bucket %s", bucketName)
 
 	err = c.orchestrator.RunBuild(arguments.version, bucketName, arguments.lambdas)
 	if err != nil {
-		c.printError(err)
+		c.out.PrintErr(err)
 		return
 	}
 }
 
-func (c *BuildAndUploadCommand) printError(err error) {
-	c.out.Println("❌", err)
-}
-
-func (c *BuildAndUploadCommand) findArtifactBucketName() (string, error) {
+func (c *buildAndUploadCommand) findArtifactBucketName() (string, error) {
 	outputs, err := c.terraform.Output(c.artifactWorkspace)
 	if err != nil {
 		return "", fmt.Errorf("Could not determine name of artifact bucket from tf state\n%s", err)
@@ -87,7 +83,7 @@ func (c *BuildAndUploadCommand) findArtifactBucketName() (string, error) {
 	return bucketName.Value, nil
 }
 
-func (c *BuildAndUploadCommand) parseArguments(args []string) (*uploadArguments, error) {
+func (c *buildAndUploadCommand) parseArguments(args []string) (*uploadArguments, error) {
 	allLambdas, err := c.findLambdaNames()
 	if err != nil {
 		return nil, err
@@ -117,7 +113,7 @@ func (c *BuildAndUploadCommand) parseArguments(args []string) (*uploadArguments,
 	}, nil
 }
 
-func (c *BuildAndUploadCommand) findLambdaNames() (lambdaNames []string, err error) {
+func (c *buildAndUploadCommand) findLambdaNames() (lambdaNames []string, err error) {
 	dirContents, err := c.filesystem.ReadDir(c.lambdasDir)
 	if err != nil {
 		return

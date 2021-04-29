@@ -18,3 +18,7 @@ func (p *printer) Println(a ...interface{}) {
 func (p *printer) Printlnf(format string, a ...interface{}) {
 	fmt.Printf(format + "\n", a...)
 }
+
+func (p *printer) PrintErr(err error) {
+	p.Println("❌", err)
+}
