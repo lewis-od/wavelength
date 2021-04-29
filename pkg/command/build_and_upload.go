@@ -7,6 +7,10 @@ import (
 	"github.com/lewis-od/lambda-build/pkg/terraform"
 )
 
+type BuildAndUploadCommand interface {
+	Run(version string, lambdas []string, skipBuild bool)
+}
+
 type buildAndUploadCommand struct {
 	orchestrator      builder.Orchestrator
 	terraform         terraform.Terraform
@@ -26,7 +30,7 @@ func NewBuildAndUploadCommand(
 	terraform terraform.Terraform,
 	filesystem io.Filesystem,
 	out io.Printer,
-) Command {
+) BuildAndUploadCommand {
 	return &buildAndUploadCommand{
 		orchestrator:      orchestrator,
 		terraform:         terraform,
@@ -37,13 +41,13 @@ func NewBuildAndUploadCommand(
 	}
 }
 
-func (c *buildAndUploadCommand) Run(args []string) {
-	arguments, err := c.parseArguments(args)
+func (c *buildAndUploadCommand) Run(version string, lambdas []string, skipBuild bool) {
+	lambdasToUpload, err := c.validateLambdaNames(lambdas)
 	if err != nil {
 		c.out.PrintErr(err)
 		return
 	}
-	c.out.Printlnf("🏗  Building version %s of %s", arguments.version, arguments.lambdas)
+	c.out.Printlnf("🏗  Orchestrating upload of version %s of %s", version, lambdasToUpload)
 
 	bucketName, err := c.findArtifactBucketName()
 	if err != nil {
@@ -52,7 +56,14 @@ func (c *buildAndUploadCommand) Run(args []string) {
 	}
 	c.out.Printlnf("🪣 Found artifact bucket %s", bucketName)
 
-	err = c.orchestrator.RunBuild(arguments.version, bucketName, arguments.lambdas)
+	if !skipBuild {
+		err = c.orchestrator.BuildLambdas(lambdasToUpload)
+		if err != nil {
+			c.out.PrintErr(err)
+			return
+		}
+	}
+	err = c.orchestrator.UploadLambdas(version, bucketName, lambdasToUpload)
 	if err != nil {
 		c.out.PrintErr(err)
 		return
@@ -75,15 +86,12 @@ func (c *buildAndUploadCommand) findArtifactBucketName() (string, error) {
 	return bucketName.Value, nil
 }
 
-func (c *buildAndUploadCommand) parseArguments(args []string) (*uploadArguments, error) {
+func (c *buildAndUploadCommand) validateLambdaNames(providedNames []string) ([]string, error) {
 	allLambdas, err := c.findLambdaNames()
 	if err != nil {
 		return nil, err
 	}
 
-	version := args[0]
-
-	providedNames := args[1:]
 	toBuild := make([]string, 0, len(allLambdas))
 	if len(providedNames) == 0 {
 		toBuild = allLambdas
@@ -96,10 +104,7 @@ func (c *buildAndUploadCommand) parseArguments(args []string) (*uploadArguments,
 		}
 	}
 
-	return &uploadArguments{
-		version: version,
-		lambdas: toBuild,
-	}, nil
+	return toBuild, nil
 }
 
 func (c *buildAndUploadCommand) findLambdaNames() (lambdaNames []string, err error) {

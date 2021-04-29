@@ -6,7 +6,8 @@ import (
 )
 
 type Orchestrator interface {
-	RunBuild(version string, bucketName string, specifiedLambdas []string) error
+	BuildLambdas(lambdas []string) error
+	UploadLambdas(version, bucketName string, lambdas []string) error
 }
 
 type orchestrator struct {
@@ -23,16 +24,7 @@ func NewOrchestrator(builder Builder, uploader Uploader, out io.Printer) Orchest
 	}
 }
 
-func (o *orchestrator) RunBuild(version, bucketName string, lambdasToBuild []string) error {
-	err := o.buildLambdas(lambdasToBuild)
-	if err != nil {
-		return err
-	}
-
-	return o.uploadLambdas(version, bucketName, lambdasToBuild)
-}
-
-func (o *orchestrator) buildLambdas(lambdas []string) error {
+func (o *orchestrator) BuildLambdas(lambdas []string) error {
 	for _, lambda := range lambdas {
 		o.out.Printlnf("🔨 Building %s...", lambda)
 		err := o.builder.BuildLambda(lambda)
@@ -44,7 +36,7 @@ func (o *orchestrator) buildLambdas(lambdas []string) error {
 	return nil
 }
 
-func (o *orchestrator) uploadLambdas(version, bucketName string, lambdas []string) error {
+func (o *orchestrator) UploadLambdas(version, bucketName string, lambdas []string) error {
 	for _, lambda := range lambdas {
 		artifact := fmt.Sprintf("lambdas/%s/dist/%s.zip", lambda, lambda)
 		o.out.Printlnf("☁️  Uploading %s...", lambda)
