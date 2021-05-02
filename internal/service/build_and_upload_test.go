@@ -2,7 +2,6 @@ package service
 
 import (
 	"fmt"
-	"github.com/lewis-od/lambda-build/internal/io"
 	"github.com/lewis-od/lambda-build/internal/terraform"
 	"github.com/stretchr/testify/mock"
 	"testing"
@@ -31,18 +30,13 @@ func (m *mockTerraform) Output(directory string) (map[string]terraform.Output, e
 	return args.Get(0).(map[string]terraform.Output), args.Error(1)
 }
 
-type mockFilesystem struct {
+type mockFinder struct {
 	mock.Mock
 }
 
-func (m *mockFilesystem) ReadDir(dirname string) ([]io.FileInfo, error) {
-	args := m.Called(dirname)
-	return args.Get(0).([]io.FileInfo), args.Error(1)
-}
-
-func (m *mockFilesystem) FileExists(filename string) bool {
-	args := m.Called(filename)
-	return args.Bool(0)
+func (m *mockFinder) GetLambdas(lambdaNames []string) ([]string, error) {
+	args := m.Called(lambdaNames)
+	return args.Get(0).([]string), args.Error(1)
 }
 
 type mockPrinter struct {
@@ -61,11 +55,11 @@ func (n *mockPrinter) PrintErr(err error) {
 	n.Called(err)
 }
 
-func TestRun_Success(t *testing.T) {
-	version := "version"
-	lambdas := []string{"one", "two"}
-	bucketName := "some-bucket"
+var version string = "version"
+var lambdas []string = []string{"one", "two"}
+var bucketName string = "some-bucket"
 
+func TestRun_Success(t *testing.T) {
 	orchestrator := new(mockOrchestrator)
 	orchestrator.On(
 		"BuildLambdas",
@@ -82,29 +76,20 @@ func TestRun_Success(t *testing.T) {
 		"terraform/deployments/artifact-storage",
 	).Return(map[string]terraform.Output{"bucket_name": terraform.Output{Value: bucketName}}, nil)
 
-	filesystem := new(mockFilesystem)
-	oneInfo := io.FileInfo{Name: "one", IsDir: true}
-	twoInfo := io.FileInfo{Name: "two", IsDir: true}
-	filesystem.On("ReadDir", "lambdas").Return([]io.FileInfo{oneInfo, twoInfo}, nil)
+	finder := new(mockFinder)
+	finder.On("GetLambdas", lambdas).Return(lambdas, nil)
 
 	printer := new(mockPrinter)
 	printer.On("Printlnf", mock.Anything, mock.Anything).Return()
 	printer.On("Printlnf", mock.Anything, mock.Anything, mock.Anything).Return()
 
-	command := NewBuildAndUploadService(orchestrator, tf, filesystem, printer)
+	command := NewBuildAndUploadService(orchestrator, tf, finder, printer)
 	command.Run(version, lambdas, false)
 
-	orchestrator.AssertExpectations(t)
-	tf.AssertExpectations(t)
-	filesystem.AssertExpectations(t)
-	printer.AssertExpectations(t)
+	mock.AssertExpectationsForObjects(t, orchestrator, tf, finder, printer)
 }
 
 func TestRun_SkipBuild(t *testing.T) {
-	version := "version"
-	lambdas := []string{"one", "two"}
-	bucketName := "some-bucket"
-
 	orchestrator := new(mockOrchestrator)
 	orchestrator.On(
 		"UploadLambdas",
@@ -117,29 +102,20 @@ func TestRun_SkipBuild(t *testing.T) {
 		"terraform/deployments/artifact-storage",
 	).Return(map[string]terraform.Output{"bucket_name": terraform.Output{Value: bucketName}}, nil)
 
-	filesystem := new(mockFilesystem)
-	oneInfo := io.FileInfo{Name: "one", IsDir: true}
-	twoInfo := io.FileInfo{Name: "two", IsDir: true}
-	filesystem.On("ReadDir", "lambdas").Return([]io.FileInfo{oneInfo, twoInfo}, nil)
+	finder := new(mockFinder)
+	finder.On("GetLambdas", lambdas).Return(lambdas, nil)
 
 	printer := new(mockPrinter)
 	printer.On("Printlnf", mock.Anything, mock.Anything).Return()
 	printer.On("Printlnf", mock.Anything, mock.Anything, mock.Anything).Return()
 
-	command := NewBuildAndUploadService(orchestrator, tf, filesystem, printer)
+	command := NewBuildAndUploadService(orchestrator, tf, finder, printer)
 	command.Run(version, lambdas, true)
 
-	orchestrator.AssertExpectations(t)
-	tf.AssertExpectations(t)
-	filesystem.AssertExpectations(t)
-	printer.AssertExpectations(t)
+	mock.AssertExpectationsForObjects(t, orchestrator, tf, finder, printer)
 }
 
 func TestRun_OrchestratorError(t *testing.T) {
-	version := "version"
-	lambdas := []string{"one", "two"}
-	bucketName := "bucket-name"
-
 	orchestrator := new(mockOrchestrator)
 	err := fmt.Errorf("Error text")
 	orchestrator.On("BuildLambdas", lambdas).Return(err)
@@ -150,29 +126,21 @@ func TestRun_OrchestratorError(t *testing.T) {
 		"terraform/deployments/artifact-storage",
 	).Return(map[string]terraform.Output{"bucket_name": terraform.Output{Value: bucketName}}, nil)
 
-	filesystem := new(mockFilesystem)
-	oneInfo := io.FileInfo{Name: "one", IsDir: true}
-	twoInfo := io.FileInfo{Name: "two", IsDir: true}
-	filesystem.On("ReadDir", "lambdas").Return([]io.FileInfo{oneInfo, twoInfo}, nil)
+	finder := new(mockFinder)
+	finder.On("GetLambdas", lambdas).Return(lambdas, nil)
 
 	printer := new(mockPrinter)
 	printer.On("Printlnf", "🏗  Orchestrating upload of version %s of %s", []interface{}{version, lambdas}).Return()
 	printer.On("Printlnf", "🪣 Found artifact bucket %s", []interface{}{bucketName}).Return()
 	printer.On("PrintErr", err).Return()
 
-	command := NewBuildAndUploadService(orchestrator, tf, filesystem, printer)
+	command := NewBuildAndUploadService(orchestrator, tf, finder, printer)
 	command.Run(version, lambdas, false)
 
-	orchestrator.AssertExpectations(t)
-	tf.AssertExpectations(t)
-	filesystem.AssertExpectations(t)
-	printer.AssertExpectations(t)
+	mock.AssertExpectationsForObjects(t, orchestrator, tf, finder, printer)
 }
 
 func TestRun_TerraformError(t *testing.T) {
-	version := "version"
-	lambdas := []string{"one", "two"}
-
 	orchestrator := new(mockOrchestrator)
 
 	tf := new(mockTerraform)
@@ -182,21 +150,33 @@ func TestRun_TerraformError(t *testing.T) {
 		"terraform/deployments/artifact-storage",
 	).Return(map[string]terraform.Output{}, err)
 
-	filesystem := new(mockFilesystem)
-	oneInfo := io.FileInfo{Name: "one", IsDir: true}
-	twoInfo := io.FileInfo{Name: "two", IsDir: true}
-	filesystem.On("ReadDir", "lambdas").Return([]io.FileInfo{oneInfo, twoInfo}, nil)
+	finder := new(mockFinder)
+	finder.On("GetLambdas", lambdas).Return(lambdas, nil)
 
 	printer := new(mockPrinter)
 	printer.On("Printlnf", "🏗  Orchestrating upload of version %s of %s", []interface{}{version, lambdas}).Return()
 	expectedError := fmt.Errorf("Could not determine name of artifact bucket from tf state\n%s", err)
 	printer.On("PrintErr", expectedError).Return()
 
-	command := NewBuildAndUploadService(orchestrator, tf, filesystem, printer)
+	command := NewBuildAndUploadService(orchestrator, tf, finder, printer)
 	command.Run(version, lambdas, false)
 
-	orchestrator.AssertExpectations(t)
-	tf.AssertExpectations(t)
-	filesystem.AssertExpectations(t)
-	printer.AssertExpectations(t)
+	mock.AssertExpectationsForObjects(t, orchestrator, tf, finder, printer)
+}
+
+func TestRun_FinderError(t *testing.T) {
+	orchestrator := new(mockOrchestrator)
+	tf := new(mockTerraform)
+
+	finder := new(mockFinder)
+	finderErr := fmt.Errorf("finder error")
+	finder.On("GetLambdas", lambdas).Return([]string{}, finderErr)
+
+	printer := new(mockPrinter)
+	printer.On("PrintErr", finderErr).Return()
+
+	command := NewBuildAndUploadService(orchestrator, tf, finder, printer)
+	command.Run(version, lambdas, false)
+
+	mock.AssertExpectationsForObjects(t, orchestrator, tf, finder, printer)
 }

@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"github.com/lewis-od/lambda-build/internal/builder"
+	"github.com/lewis-od/lambda-build/internal/finder"
 	"github.com/lewis-od/lambda-build/internal/io"
 	"github.com/lewis-od/lambda-build/internal/terraform"
 )
@@ -14,7 +15,7 @@ type BuildAndUploadService interface {
 type buildAndUploadService struct {
 	orchestrator       builder.Orchestrator
 	terraform          terraform.Terraform
-	filesystem         io.Filesystem
+	finder             finder.Finder
 	out                io.Printer
 	artifactDeployment string
 	lambdasDir         string
@@ -28,13 +29,13 @@ type uploadArguments struct {
 func NewBuildAndUploadService(
 	orchestrator builder.Orchestrator,
 	terraform terraform.Terraform,
-	filesystem io.Filesystem,
+	finder finder.Finder,
 	out io.Printer,
 ) BuildAndUploadService {
 	return &buildAndUploadService{
 		orchestrator:       orchestrator,
 		terraform:          terraform,
-		filesystem:         filesystem,
+		finder:             finder,
 		out:                out,
 		artifactDeployment: "terraform/deployments/artifact-storage",
 		lambdasDir:         "lambdas",
@@ -42,7 +43,7 @@ func NewBuildAndUploadService(
 }
 
 func (c *buildAndUploadService) Run(version string, lambdas []string, skipBuild bool) {
-	lambdasToUpload, err := c.validateLambdaNames(lambdas)
+	lambdasToUpload, err := c.finder.GetLambdas(lambdas)
 	if err != nil {
 		c.out.PrintErr(err)
 		return
@@ -84,47 +85,4 @@ func (c *buildAndUploadService) findArtifactBucketName() (string, error) {
 		return "", fmt.Errorf("No output named bucket_name found in %s", outputNames)
 	}
 	return bucketName.Value, nil
-}
-
-func (c *buildAndUploadService) validateLambdaNames(providedNames []string) ([]string, error) {
-	allLambdas, err := c.findLambdaNames()
-	if err != nil {
-		return nil, err
-	}
-
-	toBuild := make([]string, 0, len(allLambdas))
-	if len(providedNames) == 0 {
-		toBuild = allLambdas
-	} else {
-		for _, name := range providedNames {
-			if !contains(name, allLambdas) {
-				return nil, fmt.Errorf("Could not find lambda %s", name)
-			}
-			toBuild = append(toBuild, name)
-		}
-	}
-
-	return toBuild, nil
-}
-
-func (c *buildAndUploadService) findLambdaNames() (lambdaNames []string, err error) {
-	dirContents, err := c.filesystem.ReadDir(c.lambdasDir)
-	if err != nil {
-		return
-	}
-	for _, lambdaDir := range dirContents {
-		if lambdaDir.IsDir {
-			lambdaNames = append(lambdaNames, lambdaDir.Name)
-		}
-	}
-	return
-}
-
-func contains(target string, items []string) bool {
-	for _, item := range items {
-		if item == target {
-			return true
-		}
-	}
-	return false
 }
