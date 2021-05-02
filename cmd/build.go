@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var buildAndRun = service.NewBuildAndUploadService(orchestrator, tfExec, filesystem, printer)
+var buildAndRun = service.NewBuildAndUploadService(orchestrator, finder, printer)
 
 var noBuild *bool
 var buildCmd = &cobra.Command{
