@@ -1,7 +1,7 @@
 package system
 
 import (
-	"github.com/lewis-od/lambda-build/pkg/executor"
+	"github.com/lewis-od/lambda-build/internal/executor"
 	"os"
 	"os/exec"
 )

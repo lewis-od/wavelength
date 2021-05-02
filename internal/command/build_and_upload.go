@@ -2,9 +2,9 @@ package command
 
 import (
 	"fmt"
-	"github.com/lewis-od/lambda-build/pkg/builder"
-	"github.com/lewis-od/lambda-build/pkg/io"
-	"github.com/lewis-od/lambda-build/pkg/terraform"
+	"github.com/lewis-od/lambda-build/internal/builder"
+	"github.com/lewis-od/lambda-build/internal/io"
+	"github.com/lewis-od/lambda-build/internal/terraform"
 )
 
 type BuildAndUploadCommand interface {

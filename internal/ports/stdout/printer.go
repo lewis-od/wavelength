@@ -2,7 +2,7 @@ package stdout
 
 import (
 	"fmt"
-	"github.com/lewis-od/lambda-build/pkg/io"
+	"github.com/lewis-od/lambda-build/internal/io"
 )
 
 type printer struct {}

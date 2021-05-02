@@ -2,7 +2,7 @@ package terraform
 
 import (
 	"encoding/json"
-	"github.com/lewis-od/lambda-build/pkg/executor"
+	"github.com/lewis-od/lambda-build/internal/executor"
 )
 
 type Terraform interface {

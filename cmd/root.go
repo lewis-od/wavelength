@@ -4,12 +4,12 @@ import (
 	"context"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/lewis-od/lambda-build/pkg/builder"
-	"github.com/lewis-od/lambda-build/pkg/ports/aws"
-	"github.com/lewis-od/lambda-build/pkg/ports/lerna"
-	"github.com/lewis-od/lambda-build/pkg/ports/stdout"
-	"github.com/lewis-od/lambda-build/pkg/ports/system"
-	"github.com/lewis-od/lambda-build/pkg/terraform"
+	"github.com/lewis-od/lambda-build/internal/builder"
+	"github.com/lewis-od/lambda-build/internal/ports/aws"
+	"github.com/lewis-od/lambda-build/internal/ports/lerna"
+	"github.com/lewis-od/lambda-build/internal/ports/stdout"
+	"github.com/lewis-od/lambda-build/internal/ports/system"
+	"github.com/lewis-od/lambda-build/internal/terraform"
 	"github.com/spf13/cobra"
 )
 

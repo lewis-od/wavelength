@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/lewis-od/lambda-build/pkg/command"
+	"github.com/lewis-od/lambda-build/internal/command"
 	"github.com/spf13/cobra"
 )
 
