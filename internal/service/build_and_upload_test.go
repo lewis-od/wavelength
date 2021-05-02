@@ -1,4 +1,4 @@
-package command
+package service
 
 import (
 	"fmt"
@@ -91,7 +91,7 @@ func TestRun_Success(t *testing.T) {
 	printer.On("Printlnf", mock.Anything, mock.Anything).Return()
 	printer.On("Printlnf", mock.Anything, mock.Anything, mock.Anything).Return()
 
-	command := NewBuildAndUploadCommand(orchestrator, tf, filesystem, printer)
+	command := NewBuildAndUploadService(orchestrator, tf, filesystem, printer)
 	command.Run(version, lambdas, false)
 
 	orchestrator.AssertExpectations(t)
@@ -126,7 +126,7 @@ func TestRun_SkipBuild(t *testing.T) {
 	printer.On("Printlnf", mock.Anything, mock.Anything).Return()
 	printer.On("Printlnf", mock.Anything, mock.Anything, mock.Anything).Return()
 
-	command := NewBuildAndUploadCommand(orchestrator, tf, filesystem, printer)
+	command := NewBuildAndUploadService(orchestrator, tf, filesystem, printer)
 	command.Run(version, lambdas, true)
 
 	orchestrator.AssertExpectations(t)
@@ -160,7 +160,7 @@ func TestRun_OrchestratorError(t *testing.T) {
 	printer.On("Printlnf", "🪣 Found artifact bucket %s", []interface{}{bucketName}).Return()
 	printer.On("PrintErr", err).Return()
 
-	command := NewBuildAndUploadCommand(orchestrator, tf, filesystem, printer)
+	command := NewBuildAndUploadService(orchestrator, tf, filesystem, printer)
 	command.Run(version, lambdas, false)
 
 	orchestrator.AssertExpectations(t)
@@ -192,7 +192,7 @@ func TestRun_TerraformError(t *testing.T) {
 	expectedError := fmt.Errorf("Could not determine name of artifact bucket from tf state\n%s", err)
 	printer.On("PrintErr", expectedError).Return()
 
-	command := NewBuildAndUploadCommand(orchestrator, tf, filesystem, printer)
+	command := NewBuildAndUploadService(orchestrator, tf, filesystem, printer)
 	command.Run(version, lambdas, false)
 
 	orchestrator.AssertExpectations(t)

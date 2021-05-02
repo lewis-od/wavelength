@@ -1,4 +1,4 @@
-package command
+package service
 
 import (
 	"fmt"
@@ -7,17 +7,17 @@ import (
 	"github.com/lewis-od/lambda-build/internal/terraform"
 )
 
-type BuildAndUploadCommand interface {
+type BuildAndUploadService interface {
 	Run(version string, lambdas []string, skipBuild bool)
 }
 
-type buildAndUploadCommand struct {
-	orchestrator      builder.Orchestrator
-	terraform         terraform.Terraform
-	filesystem        io.Filesystem
-	out               io.Printer
-	artifactWorkspace string
-	lambdasDir        string
+type buildAndUploadService struct {
+	orchestrator       builder.Orchestrator
+	terraform          terraform.Terraform
+	filesystem         io.Filesystem
+	out                io.Printer
+	artifactDeployment string
+	lambdasDir         string
 }
 
 type uploadArguments struct {
@@ -25,23 +25,23 @@ type uploadArguments struct {
 	lambdas []string
 }
 
-func NewBuildAndUploadCommand(
+func NewBuildAndUploadService(
 	orchestrator builder.Orchestrator,
 	terraform terraform.Terraform,
 	filesystem io.Filesystem,
 	out io.Printer,
-) BuildAndUploadCommand {
-	return &buildAndUploadCommand{
-		orchestrator:      orchestrator,
-		terraform:         terraform,
-		filesystem:        filesystem,
-		out:               out,
-		artifactWorkspace: "terraform/deployments/artifact-storage",
-		lambdasDir:        "lambdas",
+) BuildAndUploadService {
+	return &buildAndUploadService{
+		orchestrator:       orchestrator,
+		terraform:          terraform,
+		filesystem:         filesystem,
+		out:                out,
+		artifactDeployment: "terraform/deployments/artifact-storage",
+		lambdasDir:         "lambdas",
 	}
 }
 
-func (c *buildAndUploadCommand) Run(version string, lambdas []string, skipBuild bool) {
+func (c *buildAndUploadService) Run(version string, lambdas []string, skipBuild bool) {
 	lambdasToUpload, err := c.validateLambdaNames(lambdas)
 	if err != nil {
 		c.out.PrintErr(err)
@@ -70,8 +70,8 @@ func (c *buildAndUploadCommand) Run(version string, lambdas []string, skipBuild 
 	}
 }
 
-func (c *buildAndUploadCommand) findArtifactBucketName() (string, error) {
-	outputs, err := c.terraform.Output(c.artifactWorkspace)
+func (c *buildAndUploadService) findArtifactBucketName() (string, error) {
+	outputs, err := c.terraform.Output(c.artifactDeployment)
 	if err != nil {
 		return "", fmt.Errorf("Could not determine name of artifact bucket from tf state\n%s", err)
 	}
@@ -86,7 +86,7 @@ func (c *buildAndUploadCommand) findArtifactBucketName() (string, error) {
 	return bucketName.Value, nil
 }
 
-func (c *buildAndUploadCommand) validateLambdaNames(providedNames []string) ([]string, error) {
+func (c *buildAndUploadService) validateLambdaNames(providedNames []string) ([]string, error) {
 	allLambdas, err := c.findLambdaNames()
 	if err != nil {
 		return nil, err
@@ -107,7 +107,7 @@ func (c *buildAndUploadCommand) validateLambdaNames(providedNames []string) ([]s
 	return toBuild, nil
 }
 
-func (c *buildAndUploadCommand) findLambdaNames() (lambdaNames []string, err error) {
+func (c *buildAndUploadService) findLambdaNames() (lambdaNames []string, err error) {
 	dirContents, err := c.filesystem.ReadDir(c.lambdasDir)
 	if err != nil {
 		return

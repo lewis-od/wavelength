@@ -1,11 +1,11 @@
 package cmd
 
 import (
-	"github.com/lewis-od/lambda-build/internal/command"
+	"github.com/lewis-od/lambda-build/internal/service"
 	"github.com/spf13/cobra"
 )
 
-var buildAndRun = command.NewBuildAndUploadCommand(orchestrator, tfExec, filesystem, printer)
+var buildAndRun = service.NewBuildAndUploadService(orchestrator, tfExec, filesystem, printer)
 
 var noBuild *bool
 var buildCmd = &cobra.Command{
