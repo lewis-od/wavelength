@@ -8,7 +8,7 @@ import (
 
 var listCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List all lambdas",
+	Short: "Lists all lambdas",
 	Run: func(cmd *cobra.Command, args []string) {
 		lambdas, err := finder.FindLambdas([]string{})
 		if err != nil {

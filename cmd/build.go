@@ -10,11 +10,11 @@ var buildAndRun = service.NewBuildAndUploadService(orchestrator, finder, printer
 var noBuild *bool
 var buildCmd = &cobra.Command{
 	Use:   "upload [version] [lambdas to build]",
-	Short: "Build and upload lambdas",
+	Short: "Builds and uploads lambdas",
 	Long: `Builds the specified lambdas using lerna, then uploads the build artifact to S3 with the key <version>/<lambda name>.zip
 
 If no lambdas are specified, all will be built and uploaded.`,
-	Args:  cobra.MinimumNArgs(1),
+	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		buildAndRun.Run(args[0], args[1:], *noBuild)
 	},
