@@ -27,7 +27,7 @@ var bucketOutputName string
 var lambdasDir string
 
 var printer = stdout.NewPrinter()
-var lernaBuilder = lerna.NewLerna(system.NewExecutor("lerna"), "jarvis")
+var lernaBuilder = lerna.NewLerna(system.NewExecutor("lerna"), &projectName)
 var awsContext = context.Background()
 var lambdaUploader = aws.NewS3Uploader(newS3Client(awsContext), awsContext)
 var orchestrator = builder.NewOrchestrator(lernaBuilder, lambdaUploader, printer)

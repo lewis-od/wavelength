@@ -7,14 +7,17 @@ import (
 )
 
 func TestBuildLambda(t *testing.T) {
+	projectName := "project"
+	lambdaName := "lambda"
+
 	mockExecutor := new(mock_executor.MockExecutor)
 	mockExecutor.On(
 		"Execute",
 		[]string{"run", "build", "--scope", "@project/lambda", "--include-dependencies"},
 	).Return(nil)
-	lerna := NewLerna(mockExecutor, "project")
+	lerna := NewLerna(mockExecutor, &projectName)
 
-	err := lerna.BuildLambda("lambda")
+	err := lerna.BuildLambda(lambdaName)
 
 	assert.Nil(t, err)
 	mockExecutor.AssertExpectations(t)

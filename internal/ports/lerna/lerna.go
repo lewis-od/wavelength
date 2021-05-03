@@ -7,11 +7,11 @@ import (
 )
 
 type lernaBuilder struct {
-	projectName string
+	projectName *string
 	executor    executor.CommandExecutor
 }
 
-func NewLerna(commandExecutor executor.CommandExecutor, projectName string) builder.Builder {
+func NewLerna(commandExecutor executor.CommandExecutor, projectName *string) builder.Builder {
 	return &lernaBuilder{
 		projectName: projectName,
 		executor:    commandExecutor,
@@ -19,7 +19,7 @@ func NewLerna(commandExecutor executor.CommandExecutor, projectName string) buil
 }
 
 func (l *lernaBuilder) BuildLambda(lambdaName string) (err error) {
-	scope := fmt.Sprintf("@%s/%s", l.projectName, lambdaName)
+	scope := fmt.Sprintf("@%s/%s", *l.projectName, lambdaName)
 	err = l.executor.Execute([]string{"run", "build", "--scope", scope, "--include-dependencies"})
 	return
 }
