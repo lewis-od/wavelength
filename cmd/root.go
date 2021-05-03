@@ -90,7 +90,7 @@ func initConfig() {
 	}
 
 	setFromConfig(&projectName, "projectName", true)
-	setFromConfig(&artifactStorageComponent, "artifactStorage.terraformPath", true)
+	setFromConfig(&artifactStorageComponent, "artifactStorage.terraformDir", true)
 	setFromConfig(&bucketOutputName, "artifactStorage.outputName", true)
 	setFromConfig(&lambdasDir, "lambdas", false)
 }
