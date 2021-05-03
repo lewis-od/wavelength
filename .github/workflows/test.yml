@@ -1,4 +1,4 @@
-name: "Run test suite"
+name: "Test and build"
 on:
   push:
     branches:
@@ -6,7 +6,7 @@ on:
   pull_request:
 jobs:
   test:
-    name: "Run tests"
+    name: "Test and build"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
