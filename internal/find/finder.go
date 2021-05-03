@@ -14,17 +14,18 @@ type Finder interface {
 type lambdaFinder struct {
 	filesystem                           io.Filesystem
 	tf                                   terraform.Terraform
-	lambdasDir, artifactStorageComponent *string
+	lambdasDir, artifactStorageComponent, outputName *string
 }
 
 func NewLambdaFinder(filesystem io.Filesystem,
 	tf terraform.Terraform,
-	lambdasDir, artifactStorageComponent *string) Finder {
+	lambdasDir, artifactStorageComponent, outputName *string) Finder {
 	return &lambdaFinder{
 		filesystem:               filesystem,
 		tf:                       tf,
 		lambdasDir:               lambdasDir,
 		artifactStorageComponent: artifactStorageComponent,
+		outputName: outputName,
 	}
 }
 
@@ -76,7 +77,7 @@ func (f *lambdaFinder) FindArtifactBucketName() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	bucketName, outputExists := outputs["bucket_name"]
+	bucketName, outputExists := outputs[*f.outputName]
 	if !outputExists {
 		outputNames := make([]string, 0, len(outputs))
 		for output := range outputs {

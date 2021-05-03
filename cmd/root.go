@@ -23,6 +23,7 @@ var configFile string
 // Loaded from config
 var projectName string
 var artifactStorageComponent string
+var bucketOutputName string
 var lambdasDir string
 
 var printer = stdout.NewPrinter()
@@ -32,7 +33,7 @@ var lambdaUploader = aws.NewS3Uploader(newS3Client(awsContext), awsContext)
 var orchestrator = builder.NewOrchestrator(lernaBuilder, lambdaUploader, printer)
 var tfExec = terraform.NewTerraform(system.NewExecutor("terraform"))
 var filesystem = system.NewFilesystem()
-var finder = find.NewLambdaFinder(filesystem, tfExec, &lambdasDir, &artifactStorageComponent)
+var finder = find.NewLambdaFinder(filesystem, tfExec, &lambdasDir, &artifactStorageComponent, &bucketOutputName)
 var updater = aws.NewLambdaUpdater(newLambdaClient(awsContext), awsContext)
 
 func newS3Client(ctx context.Context) *s3.Client {
@@ -89,7 +90,8 @@ func initConfig() {
 	}
 
 	setFromConfig(&projectName, "projectName", true)
-	setFromConfig(&artifactStorageComponent, "artifactStorage", true)
+	setFromConfig(&artifactStorageComponent, "artifactStorage.terraformPath", true)
+	setFromConfig(&bucketOutputName, "artifactStorage.outputName", true)
 	setFromConfig(&lambdasDir, "lambdas", false)
 }
 

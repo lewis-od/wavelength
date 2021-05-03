@@ -14,6 +14,7 @@ import (
 func TestLambdaFinder(t *testing.T) {
 	lambdasDir := "lambdas"
 	artifactStorageComponent := "terraform/artifact-storage"
+	outputName := "bucket_name"
 
 	var filesystem *mock_filesystem.MockFilesystem
 	var tf *mock_terraform.MockTerraform
@@ -22,7 +23,7 @@ func TestLambdaFinder(t *testing.T) {
 	setupTest := func() {
 		filesystem = new(mock_filesystem.MockFilesystem)
 		tf = new(mock_terraform.MockTerraform)
-		finder = NewLambdaFinder(filesystem, tf, &lambdasDir, &artifactStorageComponent)
+		finder = NewLambdaFinder(filesystem, tf, &lambdasDir, &artifactStorageComponent, &outputName)
 	}
 
 	assertExpectationsOnMocks := func(t *testing.T) {
@@ -84,7 +85,7 @@ func TestLambdaFinder(t *testing.T) {
 			tf.On(
 				"Output",
 				artifactStorageComponent,
-			).Return(map[string]terraform.Output{"bucket_name": {Value: bucketName}}, nil)
+			).Return(map[string]terraform.Output{outputName: {Value: bucketName}}, nil)
 
 			foundName, err := finder.FindArtifactBucketName()
 
