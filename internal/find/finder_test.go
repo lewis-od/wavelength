@@ -11,101 +11,100 @@ import (
 	"testing"
 )
 
-var lambdasDir = "lambdas"
-var artifactStorageComponent = "terraform/artifact-storage"
-var oneInfo = io.FileInfo{Name: "one", IsDir: true}
-var twoInfo = io.FileInfo{Name: "two", IsDir: true}
-var threeInfo = io.FileInfo{Name: "three", IsDir: true}
-var bucketName = "my-bucket"
+func TestLambdaFinder(t *testing.T) {
+	lambdasDir := "lambdas"
+	artifactStorageComponent := "terraform/artifact-storage"
 
-var filesystem *mock_filesystem.MockFilesystem
-var tf *mock_terraform.MockTerraform
+	var filesystem *mock_filesystem.MockFilesystem
+	var tf *mock_terraform.MockTerraform
+	var finder Finder
 
-func initMocks() {
-	filesystem = new(mock_filesystem.MockFilesystem)
-	tf = new(mock_terraform.MockTerraform)
-}
+	setupTest := func() {
+		filesystem = new(mock_filesystem.MockFilesystem)
+		tf = new(mock_terraform.MockTerraform)
+		finder = NewLambdaFinder(filesystem, tf, lambdasDir, artifactStorageComponent)
+	}
 
-func assertExpectationsOnMocks(t *testing.T) {
-	mock.AssertExpectationsForObjects(t, filesystem, tf)
-}
+	assertExpectationsOnMocks := func(t *testing.T) {
+		mock.AssertExpectationsForObjects(t, filesystem, tf)
+	}
 
-func TestGetLambdas_NoArgs(t *testing.T) {
-	initMocks()
-	filesystem.On("ReadDir", lambdasDir).Return([]io.FileInfo{oneInfo, twoInfo}, nil)
+	t.Run("GetLambdas", func(t *testing.T) {
+		oneInfo := io.FileInfo{Name: "one", IsDir: true}
+		twoInfo := io.FileInfo{Name: "two", IsDir: true}
+		threeInfo := io.FileInfo{Name: "three", IsDir: true}
 
-	finder := NewLambdaFinder(filesystem, tf, lambdasDir, artifactStorageComponent)
-	lambdas, err := finder.FindLambdas([]string{})
+		t.Run("NoArgs", func(t *testing.T) {
+			setupTest()
+			filesystem.On("ReadDir", lambdasDir).Return([]io.FileInfo{oneInfo, twoInfo}, nil)
 
-	assert.Nil(t, err)
-	assert.Equal(t, []string{"one", "two"}, lambdas)
-	assertExpectationsOnMocks(t)
-}
+			lambdas, err := finder.FindLambdas([]string{})
 
-func TestGetLambdas_ValidNames(t *testing.T) {
-	initMocks()
-	filesystem.On("ReadDir", lambdasDir).Return([]io.FileInfo{oneInfo, twoInfo, threeInfo}, nil)
+			assert.Nil(t, err)
+			assert.Equal(t, []string{"one", "two"}, lambdas)
+			assertExpectationsOnMocks(t)
+		})
+		t.Run("ValidNames", func(t *testing.T) {
+			setupTest()
+			filesystem.On("ReadDir", lambdasDir).Return([]io.FileInfo{oneInfo, twoInfo, threeInfo}, nil)
 
-	finder := NewLambdaFinder(filesystem, tf, lambdasDir, artifactStorageComponent)
-	lambdas, err := finder.FindLambdas([]string{"one", "two"})
+			lambdas, err := finder.FindLambdas([]string{"one", "two"})
 
-	assert.Nil(t, err)
-	assert.Equal(t, []string{"one", "two"}, lambdas)
-	assertExpectationsOnMocks(t)
-}
+			assert.Nil(t, err)
+			assert.Equal(t, []string{"one", "two"}, lambdas)
+			assertExpectationsOnMocks(t)
+		})
+		t.Run("InvalidNameSupplied", func(t *testing.T) {
+			setupTest()
+			filesystem.On("ReadDir", lambdasDir).Return([]io.FileInfo{oneInfo}, nil)
 
-func TestGetLambdas_InvalidNameSupplied(t *testing.T) {
-	initMocks()
-	filesystem.On("ReadDir", lambdasDir).Return([]io.FileInfo{oneInfo}, nil)
+			lambdas, err := finder.FindLambdas([]string{"two"})
 
-	finder := NewLambdaFinder(filesystem, tf, lambdasDir, artifactStorageComponent)
-	lambdas, err := finder.FindLambdas([]string{"two"})
+			assert.NotNil(t, err)
+			assert.Nil(t, lambdas)
+			assertExpectationsOnMocks(t)
+		})
+		t.Run("FilesystemError", func(t *testing.T) {
+			setupTest()
+			fsError := fmt.Errorf("filesystem error")
+			filesystem.On("ReadDir", lambdasDir).Return([]io.FileInfo{}, fsError)
 
-	assert.NotNil(t, err)
-	assert.Nil(t, lambdas)
-	assertExpectationsOnMocks(t)
-}
+			lambdas, err := finder.FindLambdas([]string{"one"})
 
-func TestGetLambdas_FilesystemError(t *testing.T) {
-	initMocks()
-	fsError := fmt.Errorf("filesystem error")
-	filesystem.On("ReadDir", lambdasDir).Return([]io.FileInfo{}, fsError)
+			assert.Equal(t, fsError, err)
+			assert.Nil(t, lambdas)
+			assertExpectationsOnMocks(t)
+		})
+	})
+	t.Run("FindArtifactBucketName", func(t *testing.T) {
+		bucketName := "my-bucket"
 
-	finder := NewLambdaFinder(filesystem, tf, lambdasDir, artifactStorageComponent)
-	lambdas, err := finder.FindLambdas([]string{"one"})
+		t.Run("Success", func(t *testing.T) {
+			setupTest()
+			tf.On(
+				"Output",
+				artifactStorageComponent,
+			).Return(map[string]terraform.Output{"bucket_name": {Value: bucketName}}, nil)
 
-	assert.Equal(t, fsError, err)
-	assert.Nil(t, lambdas)
-	assertExpectationsOnMocks(t)
-}
+			foundName, err := finder.FindArtifactBucketName()
 
-func TestFindArtifactBucketName_Success(t *testing.T) {
-	initMocks()
-	tf.On(
-		"Output",
-		artifactStorageComponent,
-	).Return(map[string]terraform.Output{"bucket_name": {Value: bucketName}}, nil)
+			assert.Nil(t, err)
+			assert.Equal(t, bucketName, foundName)
+			assertExpectationsOnMocks(t)
+		})
+		t.Run("TerraformError", func(t *testing.T) {
+			setupTest()
+			tfError := fmt.Errorf("terraform error")
+			tf.On(
+				"Output",
+				artifactStorageComponent,
+			).Return(map[string]terraform.Output{}, tfError)
 
-	finder := NewLambdaFinder(filesystem, tf, lambdasDir, artifactStorageComponent)
-	foundName, err := finder.FindArtifactBucketName()
+			foundName, err := finder.FindArtifactBucketName()
 
-	assert.Nil(t, err)
-	assert.Equal(t, bucketName, foundName)
-	assertExpectationsOnMocks(t)
-}
-
-func TestFindArtifactBucketName_TerraformError(t *testing.T) {
-	initMocks()
-	tfError := fmt.Errorf("terraform error")
-	tf.On(
-		"Output",
-		artifactStorageComponent,
-	).Return(map[string]terraform.Output{}, tfError)
-
-	finder := NewLambdaFinder(filesystem, tf, lambdasDir, artifactStorageComponent)
-	foundName, err := finder.FindArtifactBucketName()
-
-	assert.Equal(t, tfError, err)
-	assert.Empty(t, foundName)
-	assertExpectationsOnMocks(t)
+			assert.Equal(t, tfError, err)
+			assert.Empty(t, foundName)
+			assertExpectationsOnMocks(t)
+		})
+	})
 }
