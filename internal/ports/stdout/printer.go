@@ -3,6 +3,7 @@ package stdout
 import (
 	"fmt"
 	"github.com/lewis-od/wavelength/internal/io"
+	"os"
 )
 
 type printer struct{}
@@ -20,5 +21,8 @@ func (p *printer) Printlnf(format string, a ...interface{}) {
 }
 
 func (p *printer) PrintErr(err error) {
-	p.Println("❌", err)
+	_, printErr := fmt.Fprintln(os.Stderr, "❌", err)
+	if err != nil {
+		panic(printErr)
+	}
 }
