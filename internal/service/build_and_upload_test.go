@@ -2,66 +2,25 @@ package service
 
 import (
 	"fmt"
+	"github.com/lewis-od/lambda-build/internal/testutil/mock_finder"
+	"github.com/lewis-od/lambda-build/internal/testutil/mock_orchestrator"
+	"github.com/lewis-od/lambda-build/internal/testutil/mock_printer"
 	"github.com/stretchr/testify/mock"
 	"testing"
 )
-
-type mockOrchestrator struct {
-	mock.Mock
-}
-
-func (m *mockOrchestrator) BuildLambdas(lambdas []string) error {
-	args := m.Called(lambdas)
-	return args.Error(0)
-}
-
-func (m *mockOrchestrator) UploadLambdas(version, bucketName string, lambdas []string) error {
-	args := m.Called(version, bucketName, lambdas)
-	return args.Error(0)
-}
-
-type mockFinder struct {
-	mock.Mock
-}
-
-func (m *mockFinder) FindArtifactBucketName() (string, error) {
-	args := m.Called()
-	return args.String(0), args.Error(1)
-}
-
-func (m *mockFinder) FindLambdas(lambdaNames []string) ([]string, error) {
-	args := m.Called(lambdaNames)
-	return args.Get(0).([]string), args.Error(1)
-}
-
-type mockPrinter struct {
-	mock.Mock
-}
-
-func (n *mockPrinter) Println(a ...interface{}) {
-	n.Called(a)
-}
-
-func (n *mockPrinter) Printlnf(format string, a ...interface{}) {
-	n.Called(format, a)
-}
-
-func (n *mockPrinter) PrintErr(err error) {
-	n.Called(err)
-}
 
 var version string = "version"
 var lambdas []string = []string{"one", "two"}
 var bucketName string = "some-bucket"
 
-var orchestrator *mockOrchestrator
-var finder *mockFinder
-var printer *mockPrinter
+var orchestrator *mock_orchestrator.MockOrchestrator
+var finder *mock_finder.MockFinder
+var printer *mock_printer.MockPrinter
 
 func initMocks() {
-	orchestrator = new(mockOrchestrator)
-	finder = new(mockFinder)
-	printer = new(mockPrinter)
+	orchestrator = new(mock_orchestrator.MockOrchestrator)
+	finder = new(mock_finder.MockFinder)
+	printer = new(mock_printer.MockPrinter)
 }
 
 func assertExpectationsOnMocks(t *testing.T) {

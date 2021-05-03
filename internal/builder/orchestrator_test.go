@@ -1,89 +1,54 @@
 package builder
 
 import (
+	"github.com/lewis-od/lambda-build/internal/testutil/mock_builder"
+	"github.com/lewis-od/lambda-build/internal/testutil/mock_printer"
+	"github.com/lewis-od/lambda-build/internal/testutil/mock_uploader"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"testing"
 )
 
-type mockBuilder struct {
-	mock.Mock
-}
+var lambdas = []string{"one", "two"}
+var version = "version"
+var bucketName = "bucketName"
 
-func (m *mockBuilder) BuildLambda(lambdaName string) error {
-	args := m.Called(lambdaName)
-	return args.Error(0)
-}
+var builder *mock_builder.MockBuilder
+var uploader *mock_uploader.MockUploader
+var printer *mock_printer.MockPrinter
 
-type mockUploader struct {
-	mock.Mock
-}
-
-func (m *mockUploader) UploadLambda(version, bucketName, lambdaName, artifactLocation string) error {
-	args := m.Called(version, bucketName, lambdaName, artifactLocation)
-	return args.Error(0)
-}
-
-type mockPrinter struct {
-	mock.Mock
-}
-
-func (n *mockPrinter) Println(a ...interface{}) {
-	n.Called(a)
-}
-
-func (n *mockPrinter) Printlnf(format string, a ...interface{}) {
-	n.Called(format, a)
-}
-
-func (n *mockPrinter) PrintErr(err error) {
-	n.Called(err)
-}
-
-func newMockPrinter() (printer *mockPrinter) {
-	printer = new(mockPrinter)
+func initMocks() {
+	builder = new(mock_builder.MockBuilder)
+	uploader = new(mock_uploader.MockUploader)
+	printer = new(mock_printer.MockPrinter)
 	printer.On("Printlnf", mock.Anything, mock.Anything).Return()
 	printer.On("Println", mock.Anything).Return()
-	return
+}
+
+func assertExpectationsOnMocks(t *testing.T) {
+	mock.AssertExpectationsForObjects(t, builder, uploader, printer)
 }
 
 func TestBuildLambdas_Success(t *testing.T) {
-	lambdas := []string{"one", "two"}
-
-	builder := new(mockBuilder)
+	initMocks()
 	builder.On("BuildLambda", "one").Return(nil)
 	builder.On("BuildLambda", "two").Return(nil)
-
-	uploader := new(mockUploader)
-	printer := newMockPrinter()
 
 	orchestrator := NewOrchestrator(builder, uploader, printer)
 	err := orchestrator.BuildLambdas(lambdas)
 
 	assert.Nil(t, err)
-	builder.AssertExpectations(t)
-	uploader.AssertExpectations(t)
-	printer.AssertExpectations(t)
+	assertExpectationsOnMocks(t)
 }
 
 func TestUploadLambdas_Success(t *testing.T) {
-	version := "version"
-	bucketName := "bucket"
-	lambdas := []string{"one", "two"}
-
-	builder := new(mockBuilder)
-
-	uploader := new(mockUploader)
+	initMocks()
 	uploader.On("UploadLambda", version, bucketName, "one", "lambdas/one/dist/one.zip").Return(nil)
 	uploader.On("UploadLambda", version, bucketName, "two", "lambdas/two/dist/two.zip").Return(nil)
-
-	printer := newMockPrinter()
 
 	orchestrator := NewOrchestrator(builder, uploader, printer)
 	err := orchestrator.UploadLambdas(version, bucketName, lambdas)
 
 	assert.Nil(t, err)
-	builder.AssertExpectations(t)
-	uploader.AssertExpectations(t)
-	printer.AssertExpectations(t)
+	assertExpectationsOnMocks(t)
 }

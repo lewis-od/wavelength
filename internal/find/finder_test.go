@@ -4,47 +4,26 @@ import (
 	"fmt"
 	"github.com/lewis-od/lambda-build/internal/io"
 	"github.com/lewis-od/lambda-build/internal/terraform"
+	"github.com/lewis-od/lambda-build/internal/testutil/mock_filesystem"
+	"github.com/lewis-od/lambda-build/internal/testutil/mock_terraform"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"testing"
 )
 
-type mockFilesystem struct {
-	mock.Mock
-}
-
-func (m *mockFilesystem) ReadDir(dirname string) ([]io.FileInfo, error) {
-	args := m.Called(dirname)
-	return args.Get(0).([]io.FileInfo), args.Error(1)
-}
-
-func (m *mockFilesystem) FileExists(filename string) bool {
-	args := m.Called(filename)
-	return args.Bool(0)
-}
-
-type mockTerraform struct {
-	mock.Mock
-}
-
-func (m *mockTerraform) Output(directory string) (map[string]terraform.Output, error) {
-	args := m.Called(directory)
-	return args.Get(0).(map[string]terraform.Output), args.Error(1)
-}
-
-var lambdasDir string = "lambdas"
+var lambdasDir = "lambdas"
 var artifactStorageComponent = "terraform/artifact-storage"
-var oneInfo io.FileInfo = io.FileInfo{Name: "one", IsDir: true}
-var twoInfo io.FileInfo = io.FileInfo{Name: "two", IsDir: true}
-var threeInfo io.FileInfo = io.FileInfo{Name: "three", IsDir: true}
-var bucketName string = "my-bucket"
+var oneInfo = io.FileInfo{Name: "one", IsDir: true}
+var twoInfo = io.FileInfo{Name: "two", IsDir: true}
+var threeInfo = io.FileInfo{Name: "three", IsDir: true}
+var bucketName = "my-bucket"
 
-var filesystem *mockFilesystem
-var tf *mockTerraform
+var filesystem *mock_filesystem.MockFilesystem
+var tf *mock_terraform.MockTerraform
 
 func initMocks() {
-	filesystem = new(mockFilesystem)
-	tf = new(mockTerraform)
+	filesystem = new(mock_filesystem.MockFilesystem)
+	tf = new(mock_terraform.MockTerraform)
 }
 
 func assertExpectationsOnMocks(t *testing.T) {
@@ -105,7 +84,7 @@ func TestFindArtifactBucketName_Success(t *testing.T) {
 	tf.On(
 		"Output",
 		artifactStorageComponent,
-	).Return(map[string]terraform.Output{"bucket_name": terraform.Output{Value: bucketName}}, nil)
+	).Return(map[string]terraform.Output{"bucket_name": {Value: bucketName}}, nil)
 
 	finder := NewLambdaFinder(filesystem, tf, lambdasDir, artifactStorageComponent)
 	foundName, err := finder.FindArtifactBucketName()
