@@ -18,3 +18,6 @@ jobs:
 
       - name: "Run tests"
         run: make test
+
+      - name: "Compile project"
+        run: make build
