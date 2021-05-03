@@ -120,7 +120,7 @@ uploaded.
 
 [UpdateFunctionCode]: https://docs.aws.amazon.com/lambda/latest/dg/API_UpdateFunctionCode.html
 
-# CI/CD Workflow
+## CI/CD Workflow
 Wavelength is intended to be used as part of a CI/CD pipeline as:
 ```shell
 wavelength upload <commit-sha>
