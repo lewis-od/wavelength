@@ -22,7 +22,7 @@ func (p *printer) Printlnf(format string, a ...interface{}) {
 
 func (p *printer) PrintErr(err error) {
 	_, printErr := fmt.Fprintln(os.Stderr, "❌", err)
-	if err != nil {
+	if printErr != nil {
 		panic(printErr)
 	}
 }

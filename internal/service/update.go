@@ -15,7 +15,7 @@ func NewUpdateService(
 	finder find.Finder,
 	updater builder.Updater,
 	printer io.Printer,
-	projectName string) UpdateService {
+	projectName *string) UpdateService {
 	return &updateService{
 		finder:      finder,
 		updater:     updater,
@@ -28,7 +28,7 @@ type updateService struct {
 	finder      find.Finder
 	updater     builder.Updater
 	printer     io.Printer
-	projectName string
+	projectName *string
 }
 
 func (u *updateService) Run(version string, lambdaNames []string) {

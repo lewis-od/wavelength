@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var updateService = service.NewUpdateService(finder, updater, printer, projectName)
+var updateService = service.NewUpdateService(finder, updater, printer, &projectName)
 
 var updateCmd = &cobra.Command{
 	Use:   "update [version] [lambdas to build (optional)]",

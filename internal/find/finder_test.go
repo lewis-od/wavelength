@@ -22,7 +22,7 @@ func TestLambdaFinder(t *testing.T) {
 	setupTest := func() {
 		filesystem = new(mock_filesystem.MockFilesystem)
 		tf = new(mock_terraform.MockTerraform)
-		finder = NewLambdaFinder(filesystem, tf, lambdasDir, artifactStorageComponent)
+		finder = NewLambdaFinder(filesystem, tf, &lambdasDir, &artifactStorageComponent)
 	}
 
 	assertExpectationsOnMocks := func(t *testing.T) {
