@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/lambda"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/lewis-od/lambda-build/internal/builder"
 	"github.com/lewis-od/lambda-build/internal/find"
@@ -15,6 +16,7 @@ import (
 )
 
 // To be loaded from config
+const projectName = "jarvis"
 const lambdasDir = "lambdas"
 const artifactStorageComponent = "terraform/deployments/artifact-storage"
 
@@ -26,6 +28,7 @@ var orchestrator = builder.NewOrchestrator(lernaBuilder, lambdaUploader, printer
 var tfExec = terraform.NewTerraform(system.NewExecutor("terraform"))
 var filesystem = system.NewFilesystem()
 var finder = find.NewLambdaFinder(filesystem, tfExec, lambdasDir, artifactStorageComponent)
+var updater = aws.NewLambdaUpdater(newLambdaClient(awsContext), awsContext)
 
 func newS3Client(ctx context.Context) *s3.Client {
 	cfg, err := config.LoadDefaultConfig(ctx)
@@ -34,6 +37,15 @@ func newS3Client(ctx context.Context) *s3.Client {
 	}
 
 	return s3.NewFromConfig(cfg)
+}
+
+func newLambdaClient(ctx context.Context) *lambda.Client {
+	cfg, err := config.LoadDefaultConfig(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	return lambda.NewFromConfig(cfg)
 }
 
 var rootCmd = &cobra.Command{
