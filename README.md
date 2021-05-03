@@ -8,7 +8,6 @@ Currently only supports AWS Lambda functions using a Node.js runtime, deployed u
 You must have the following installed and on your `$PATH`:
 - [Lerna](https://github.com/lerna/lerna)
 - [Terraform](https://www.terraform.io/)
-- [AWS CLI](https://aws.amazon.com/cli/)
 
 ## How it works
 
