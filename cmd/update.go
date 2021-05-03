@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/lewis-od/lambda-build/internal/service"
+	"github.com/lewis-od/wavelength/internal/service"
 
 	"github.com/spf13/cobra"
 )

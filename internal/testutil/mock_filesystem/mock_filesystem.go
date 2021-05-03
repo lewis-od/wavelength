@@ -1,7 +1,7 @@
 package mock_filesystem
 
 import (
-	"github.com/lewis-od/lambda-build/internal/io"
+	"github.com/lewis-od/wavelength/internal/io"
 	"github.com/stretchr/testify/mock"
 )
 

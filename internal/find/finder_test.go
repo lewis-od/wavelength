@@ -2,10 +2,10 @@ package find
 
 import (
 	"fmt"
-	"github.com/lewis-od/lambda-build/internal/io"
-	"github.com/lewis-od/lambda-build/internal/terraform"
-	"github.com/lewis-od/lambda-build/internal/testutil/mock_filesystem"
-	"github.com/lewis-od/lambda-build/internal/testutil/mock_terraform"
+	"github.com/lewis-od/wavelength/internal/io"
+	"github.com/lewis-od/wavelength/internal/terraform"
+	"github.com/lewis-od/wavelength/internal/testutil/mock_filesystem"
+	"github.com/lewis-od/wavelength/internal/testutil/mock_terraform"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"testing"

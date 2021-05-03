@@ -1,7 +1,7 @@
 package mock_executor
 
 import (
-	"github.com/lewis-od/lambda-build/internal/executor"
+	"github.com/lewis-od/wavelength/internal/executor"
 	"github.com/stretchr/testify/mock"
 )
 

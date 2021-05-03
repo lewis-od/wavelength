@@ -3,7 +3,7 @@
 default: test build
 
 build:
-	go build -o ./dist/lambda-build .
+	go build -o ./dist/wavelength .
 
 test:
 	go test -v ./...

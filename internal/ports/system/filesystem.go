@@ -1,7 +1,7 @@
 package system
 
 import (
-	"github.com/lewis-od/lambda-build/internal/io"
+	"github.com/lewis-od/wavelength/internal/io"
 	"io/ioutil"
 	"os"
 )

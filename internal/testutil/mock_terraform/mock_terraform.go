@@ -1,7 +1,7 @@
 package mock_terraform
 
 import (
-	"github.com/lewis-od/lambda-build/internal/terraform"
+	"github.com/lewis-od/wavelength/internal/terraform"
 	"github.com/stretchr/testify/mock"
 )
 

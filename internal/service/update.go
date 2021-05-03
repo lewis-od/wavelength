@@ -2,9 +2,9 @@ package service
 
 import (
 	"fmt"
-	"github.com/lewis-od/lambda-build/internal/builder"
-	"github.com/lewis-od/lambda-build/internal/find"
-	"github.com/lewis-od/lambda-build/internal/io"
+	"github.com/lewis-od/wavelength/internal/builder"
+	"github.com/lewis-od/wavelength/internal/find"
+	"github.com/lewis-od/wavelength/internal/io"
 )
 
 type UpdateService interface {

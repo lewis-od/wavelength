@@ -15,7 +15,7 @@ limitations under the License.
 */
 package main
 
-import "github.com/lewis-od/lambda-build/cmd"
+import "github.com/lewis-od/wavelength/cmd"
 
 func main() {
 	cmd.Execute()

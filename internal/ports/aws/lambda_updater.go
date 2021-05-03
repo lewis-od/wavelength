@@ -3,7 +3,7 @@ package aws
 import (
 	"context"
 	"github.com/aws/aws-sdk-go-v2/service/lambda"
-	"github.com/lewis-od/lambda-build/internal/builder"
+	"github.com/lewis-od/wavelength/internal/builder"
 )
 
 type UpdateFunctionCodeApi interface {

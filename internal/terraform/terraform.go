@@ -2,7 +2,7 @@ package terraform
 
 import (
 	"encoding/json"
-	"github.com/lewis-od/lambda-build/internal/executor"
+	"github.com/lewis-od/wavelength/internal/executor"
 )
 
 type Terraform interface {
@@ -20,9 +20,9 @@ func NewTerraform(executor executor.CommandExecutor) Terraform {
 }
 
 type Output struct {
-	Sensitive bool `json:"sensitive"`
-	Type string `json:"type"`
-	Value string `json:"value"`
+	Sensitive bool   `json:"sensitive"`
+	Type      string `json:"type"`
+	Value     string `json:"value"`
 }
 
 func (tf *tfExecutor) Output(directory string) (map[string]Output, error) {

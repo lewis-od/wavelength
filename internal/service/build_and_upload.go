@@ -1,9 +1,9 @@
 package service
 
 import (
-	"github.com/lewis-od/lambda-build/internal/builder"
-	"github.com/lewis-od/lambda-build/internal/find"
-	"github.com/lewis-od/lambda-build/internal/io"
+	"github.com/lewis-od/wavelength/internal/builder"
+	"github.com/lewis-od/wavelength/internal/find"
+	"github.com/lewis-od/wavelength/internal/io"
 )
 
 type BuildAndUploadService interface {
@@ -11,14 +11,9 @@ type BuildAndUploadService interface {
 }
 
 type buildAndUploadService struct {
-	orchestrator       builder.Orchestrator
-	finder             find.Finder
-	out                io.Printer
-}
-
-type uploadArguments struct {
-	version string
-	lambdas []string
+	orchestrator builder.Orchestrator
+	finder       find.Finder
+	out          io.Printer
 }
 
 func NewBuildAndUploadService(
@@ -27,9 +22,9 @@ func NewBuildAndUploadService(
 	out io.Printer,
 ) BuildAndUploadService {
 	return &buildAndUploadService{
-		orchestrator:       orchestrator,
-		finder:             finder,
-		out:                out,
+		orchestrator: orchestrator,
+		finder:       finder,
+		out:          out,
 	}
 }
 

@@ -2,7 +2,7 @@ package builder
 
 import (
 	"fmt"
-	"github.com/lewis-od/lambda-build/internal/io"
+	"github.com/lewis-od/wavelength/internal/io"
 )
 
 type Orchestrator interface {

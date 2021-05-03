@@ -2,9 +2,9 @@ package service
 
 import (
 	"fmt"
-	"github.com/lewis-od/lambda-build/internal/testutil/mock_finder"
-	"github.com/lewis-od/lambda-build/internal/testutil/mock_printer"
-	"github.com/lewis-od/lambda-build/internal/testutil/mock_updater"
+	"github.com/lewis-od/wavelength/internal/testutil/mock_finder"
+	"github.com/lewis-od/wavelength/internal/testutil/mock_printer"
+	"github.com/lewis-od/wavelength/internal/testutil/mock_updater"
 	"github.com/stretchr/testify/mock"
 	"testing"
 )

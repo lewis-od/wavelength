@@ -2,8 +2,8 @@ package lerna
 
 import (
 	"fmt"
-	"github.com/lewis-od/lambda-build/internal/builder"
-	"github.com/lewis-od/lambda-build/internal/executor"
+	"github.com/lewis-od/wavelength/internal/builder"
+	"github.com/lewis-od/wavelength/internal/executor"
 )
 
 type lernaBuilder struct {

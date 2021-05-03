@@ -1,8 +1,8 @@
 package terraform
 
 import (
-	"github.com/lewis-od/lambda-build/internal/executor"
-	"github.com/lewis-od/lambda-build/internal/testutil/mock_executor"
+	"github.com/lewis-od/wavelength/internal/executor"
+	"github.com/lewis-od/wavelength/internal/testutil/mock_executor"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

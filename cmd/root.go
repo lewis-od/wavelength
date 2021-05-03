@@ -5,13 +5,13 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/lambda"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/lewis-od/lambda-build/internal/builder"
-	"github.com/lewis-od/lambda-build/internal/find"
-	"github.com/lewis-od/lambda-build/internal/ports/aws"
-	"github.com/lewis-od/lambda-build/internal/ports/lerna"
-	"github.com/lewis-od/lambda-build/internal/ports/stdout"
-	"github.com/lewis-od/lambda-build/internal/ports/system"
-	"github.com/lewis-od/lambda-build/internal/terraform"
+	"github.com/lewis-od/wavelength/internal/builder"
+	"github.com/lewis-od/wavelength/internal/find"
+	"github.com/lewis-od/wavelength/internal/ports/aws"
+	"github.com/lewis-od/wavelength/internal/ports/lerna"
+	"github.com/lewis-od/wavelength/internal/ports/stdout"
+	"github.com/lewis-od/wavelength/internal/ports/system"
+	"github.com/lewis-od/wavelength/internal/terraform"
 	"github.com/spf13/cobra"
 )
 
@@ -49,8 +49,8 @@ func newLambdaClient(ctx context.Context) *lambda.Client {
 }
 
 var rootCmd = &cobra.Command{
-	Use:   "lambda-build",
-	Short: "Tool for working with lambdas",
+	Use:   "wavelength",
+	Short: "Opinionated tool for building and deploying lambdas using Terraform & Node.js",
 }
 
 func Execute() {

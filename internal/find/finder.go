@@ -2,8 +2,8 @@ package find
 
 import (
 	"fmt"
-	"github.com/lewis-od/lambda-build/internal/io"
-	"github.com/lewis-od/lambda-build/internal/terraform"
+	"github.com/lewis-od/wavelength/internal/io"
+	"github.com/lewis-od/wavelength/internal/terraform"
 )
 
 type Finder interface {

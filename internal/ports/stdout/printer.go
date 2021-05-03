@@ -2,10 +2,10 @@ package stdout
 
 import (
 	"fmt"
-	"github.com/lewis-od/lambda-build/internal/io"
+	"github.com/lewis-od/wavelength/internal/io"
 )
 
-type printer struct {}
+type printer struct{}
 
 func NewPrinter() io.Printer {
 	return &printer{}
@@ -16,7 +16,7 @@ func (p *printer) Println(a ...interface{}) {
 }
 
 func (p *printer) Printlnf(format string, a ...interface{}) {
-	fmt.Printf(format + "\n", a...)
+	fmt.Printf(format+"\n", a...)
 }
 
 func (p *printer) PrintErr(err error) {
