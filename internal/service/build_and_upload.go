@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"github.com/lewis-od/wavelength/internal/builder"
 	"github.com/lewis-od/wavelength/internal/find"
 	"github.com/lewis-od/wavelength/internal/io"
@@ -44,9 +45,9 @@ func (c *buildAndUploadService) Run(version string, lambdas []string, skipBuild 
 	c.out.Printlnf("🪣 Found artifact bucket %s", bucketName)
 
 	if !skipBuild {
-		err = c.orchestrator.BuildLambdas(lambdasToUpload)
-		if err != nil {
-			c.out.PrintErr(err)
+		failedBuilds := c.orchestrator.BuildLambdas(lambdasToUpload)
+		if len(failedBuilds) != 0 {
+			c.printBuildErrors(failedBuilds)
 			return
 		}
 	}
@@ -54,5 +55,12 @@ func (c *buildAndUploadService) Run(version string, lambdas []string, skipBuild 
 	if err != nil {
 		c.out.PrintErr(err)
 		return
+	}
+}
+
+func (c *buildAndUploadService) printBuildErrors(buildResults []*builder.BuildResult) {
+	for _, result := range buildResults {
+		err := fmt.Errorf("Error building lambda %s\n%s\n%s\n", result.LambdaName, result.Error, result.Output)
+		c.out.PrintErr(err)
 	}
 }

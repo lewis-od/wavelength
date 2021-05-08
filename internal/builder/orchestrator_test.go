@@ -3,9 +3,7 @@ package builder_test
 import (
 	"fmt"
 	"github.com/lewis-od/wavelength/internal/builder"
-	"github.com/lewis-od/wavelength/internal/error_logger"
 	"github.com/lewis-od/wavelength/internal/testutil/mock_builder"
-	"github.com/lewis-od/wavelength/internal/testutil/mock_error_logger"
 	"github.com/lewis-od/wavelength/internal/testutil/mock_printer"
 	"github.com/lewis-od/wavelength/internal/testutil/mock_uploader"
 	"github.com/stretchr/testify/assert"
@@ -18,7 +16,6 @@ func TestOrchestrator(t *testing.T) {
 
 	var mockBuilder *mock_builder.MockBuilder
 	var mockUploader *mock_uploader.MockUploader
-	var mockErrorLogger *mock_error_logger.MockErrorLogger
 	var mockPrinter *mock_printer.MockPrinter
 	var orchestrator builder.Orchestrator
 
@@ -26,14 +23,13 @@ func TestOrchestrator(t *testing.T) {
 		mockBuilder = new(mock_builder.MockBuilder)
 		mockUploader = new(mock_uploader.MockUploader)
 		mockPrinter = new(mock_printer.MockPrinter)
-		mockErrorLogger = new(mock_error_logger.MockErrorLogger)
 		mockPrinter.On("Printlnf", mock.Anything, mock.Anything).Return()
 		mockPrinter.On("Println", mock.Anything).Return()
-		orchestrator = builder.NewOrchestrator(mockBuilder, mockUploader, mockErrorLogger, mockPrinter)
+		orchestrator = builder.NewOrchestrator(mockBuilder, mockUploader, mockPrinter)
 	}
 
 	assertExpectationsOnMocks := func(t *testing.T) {
-		mock.AssertExpectationsForObjects(t, mockBuilder, mockUploader, mockErrorLogger)
+		mock.AssertExpectationsForObjects(t, mockBuilder, mockUploader)
 	}
 
 	t.Run("BuildLambdas", func(t *testing.T) {
@@ -47,9 +43,9 @@ func TestOrchestrator(t *testing.T) {
 			mockBuilder.On("BuildLambda", "one").Return(successResult)
 			mockBuilder.On("BuildLambda", "two").Return(successResult)
 
-			err := orchestrator.BuildLambdas(lambdas)
+			failedBuilds := orchestrator.BuildLambdas(lambdas)
 
-			assert.Nil(t, err)
+			assert.Empty(t, failedBuilds)
 			assertExpectationsOnMocks(t)
 		})
 		t.Run("ErrorBuilding", func(t *testing.T) {
@@ -67,44 +63,10 @@ func TestOrchestrator(t *testing.T) {
 			mockBuilder.On("BuildLambda", "one").Return(successResult)
 			mockBuilder.On("BuildLambda", "two").Return(errorResult)
 
-			expectedError := &error_logger.WavelengthError{
-				Lambda: "two",
-				Output: []byte("error"),
-			}
-			mockErrorLogger.On("AddError", expectedError).Return()
-			mockErrorLogger.On("WriteLogFile").Return(nil)
+			failedBuilds := orchestrator.BuildLambdas(lambdas)
 
-			err := orchestrator.BuildLambdas(lambdas)
-
-			assert.Equal(t, fmt.Errorf("Error building lambdas [two]"), err)
-			assertExpectationsOnMocks(t)
-		})
-		t.Run("ErrorWritingLogFile", func(t *testing.T) {
-			setupTest()
-			successResult := &builder.BuildResult{
-				LambdaName: "one",
-				Error:  nil,
-				Output: []byte("success"),
-			}
-			errorResult := &builder.BuildResult{
-				LambdaName: "two",
-				Error: fmt.Errorf("error"),
-				Output: []byte("error"),
-			}
-			mockBuilder.On("BuildLambda", "one").Return(successResult)
-			mockBuilder.On("BuildLambda", "two").Return(errorResult)
-
-			buildError := &error_logger.WavelengthError{
-				Lambda: "two",
-				Output: []byte("error"),
-			}
-			mockErrorLogger.On("AddError", buildError).Return()
-			expectedErr := fmt.Errorf("error writing log")
-			mockErrorLogger.On("WriteLogFile").Return(expectedErr)
-
-			err := orchestrator.BuildLambdas(lambdas)
-
-			assert.Equal(t, expectedErr, err)
+			assert.Len(t, failedBuilds, 1)
+			assert.Contains(t, failedBuilds, errorResult)
 			assertExpectationsOnMocks(t)
 		})
 	})
