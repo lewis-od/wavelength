@@ -1,6 +1,7 @@
 package lerna
 
 import (
+	"github.com/lewis-od/wavelength/internal/builder"
 	"github.com/lewis-od/wavelength/internal/executor"
 	"github.com/lewis-od/wavelength/internal/testutil/mock_executor"
 	"github.com/stretchr/testify/assert"
@@ -13,7 +14,7 @@ func TestBuildLambda(t *testing.T) {
 
 	expectedContext := &executor.CommandContext{Directory: "."}
 
-	buildOutput := []byte("Build succeeded")
+	buildOutput := []byte("output")
 	mockExecutor := new(mock_executor.MockExecutor)
 	mockExecutor.On(
 		"ExecuteAndCapture",
@@ -22,9 +23,13 @@ func TestBuildLambda(t *testing.T) {
 	).Return(buildOutput, nil)
 	lerna := NewLerna(mockExecutor, &projectName)
 
-	output, err := lerna.BuildLambda(lambdaName)
+	result := lerna.BuildLambda(lambdaName)
 
-	assert.Nil(t, err)
-	assert.Equal(t, buildOutput, output)
+	expectedResult := &builder.BuildResult{
+		LambdaName: lambdaName,
+		Error:  nil,
+		Output: buildOutput,
+	}
+	assert.Equal(t, expectedResult, result)
 	mockExecutor.AssertExpectations(t)
 }

@@ -1,6 +1,7 @@
-package builder
+package builder_test
 
 import (
+	"github.com/lewis-od/wavelength/internal/builder"
 	"github.com/lewis-od/wavelength/internal/testutil/mock_builder"
 	"github.com/lewis-od/wavelength/internal/testutil/mock_printer"
 	"github.com/lewis-od/wavelength/internal/testutil/mock_uploader"
@@ -12,30 +13,35 @@ import (
 func TestOrchestrator(t *testing.T) {
 	lambdas := []string{"one", "two"}
 
-	var builder *mock_builder.MockBuilder
-	var uploader *mock_uploader.MockUploader
-	var printer *mock_printer.MockPrinter
-	var orchestrator Orchestrator
+	var mockBuilder *mock_builder.MockBuilder
+	var mockUploader *mock_uploader.MockUploader
+	var mockPrinter *mock_printer.MockPrinter
+	var mockOrchestrator builder.Orchestrator
 
 	setupTest := func() {
-		builder = new(mock_builder.MockBuilder)
-		uploader = new(mock_uploader.MockUploader)
-		printer = new(mock_printer.MockPrinter)
-		printer.On("Printlnf", mock.Anything, mock.Anything).Return()
-		printer.On("Println", mock.Anything).Return()
-		orchestrator = NewOrchestrator(builder, uploader, printer)
+		mockBuilder = new(mock_builder.MockBuilder)
+		mockUploader = new(mock_uploader.MockUploader)
+		mockPrinter = new(mock_printer.MockPrinter)
+		mockPrinter.On("Printlnf", mock.Anything, mock.Anything).Return()
+		mockPrinter.On("Println", mock.Anything).Return()
+		mockOrchestrator = builder.NewOrchestrator(mockBuilder, mockUploader, mockPrinter)
 	}
 
 	assertExpectationsOnMocks := func(t *testing.T) {
-		mock.AssertExpectationsForObjects(t, builder, uploader, printer)
+		mock.AssertExpectationsForObjects(t, mockBuilder, mockUploader, mockPrinter)
 	}
 
 	t.Run("BuildLambdas", func(t *testing.T) {
 		setupTest()
-		builder.On("BuildLambda", "one").Return([]byte(""), nil)
-		builder.On("BuildLambda", "two").Return([]byte(""), nil)
+		successResult := &builder.BuildResult{
+			LambdaName: "foo",
+			Error:  nil,
+			Output: []byte("success"),
+		}
+		mockBuilder.On("BuildLambda", "one").Return(successResult)
+		mockBuilder.On("BuildLambda", "two").Return(successResult)
 
-		err := orchestrator.BuildLambdas(lambdas)
+		err := mockOrchestrator.BuildLambdas(lambdas)
 
 		assert.Nil(t, err)
 		assertExpectationsOnMocks(t)
@@ -45,10 +51,10 @@ func TestOrchestrator(t *testing.T) {
 		bucketName := "bucketName"
 		setupTest()
 
-		uploader.On("UploadLambda", version, bucketName, "one", "lambdas/one/dist/one.zip").Return(nil)
-		uploader.On("UploadLambda", version, bucketName, "two", "lambdas/two/dist/two.zip").Return(nil)
+		mockUploader.On("UploadLambda", version, bucketName, "one", "lambdas/one/dist/one.zip").Return(nil)
+		mockUploader.On("UploadLambda", version, bucketName, "two", "lambdas/two/dist/two.zip").Return(nil)
 
-		err := orchestrator.UploadLambdas(version, bucketName, lambdas)
+		err := mockOrchestrator.UploadLambdas(version, bucketName, lambdas)
 
 		assert.Nil(t, err)
 		assertExpectationsOnMocks(t)

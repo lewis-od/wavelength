@@ -25,37 +25,32 @@ func NewOrchestrator(builder Builder, uploader Uploader, out io.Printer) Orchest
 }
 
 func (o *orchestrator) BuildLambdas(lambdas []string) error {
-	errChan := make(chan error)
-	successChan := make(chan bool)
+	resultChan := make(chan *BuildResult)
 
 	for _, lambda := range lambdas {
 		o.out.Printlnf("🔨 Building %s...", lambda)
 		go func(lambdaName string) {
-			_, err := o.builder.BuildLambda(lambdaName)
-			if err != nil {
-				errChan <- fmt.Errorf("Error building %s", lambdaName)
-			} else {
-				successChan <- true
-			}
+			resultChan <- o.builder.BuildLambda(lambdaName)
 		}(lambda)
 	}
 
-	errs := make([]error, 0, len(lambdas))
-	completedBuilds := 0
+	results := make([]*BuildResult, 0, len(lambdas))
 	for {
-		select {
-		case err := <-errChan:
-			errs = append(errs, err)
-			completedBuilds++
-		case <-successChan:
-			completedBuilds++
-		}
-		if completedBuilds == len(lambdas) {
+		result := <- resultChan
+		results = append(results, result)
+		if len(results) == len(lambdas) {
 			break
 		}
 	}
-	if len(errs) != 0 {
-		return fmt.Errorf("%s", errs)
+
+	failedLambdas := make([]string, 0, len(lambdas))
+	for _, result := range results {
+		if result.Error != nil {
+			failedLambdas = append(failedLambdas, result.LambdaName)
+		}
+	}
+	if len(failedLambdas) != 0 {
+		return fmt.Errorf("Error building lambdas %s", failedLambdas)
 	}
 
 	o.out.Println("✅ Build complete")
