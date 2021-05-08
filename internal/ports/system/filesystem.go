@@ -32,3 +32,17 @@ func (fs *osFilesystem) FileExists(filename string) bool {
 	_, err := os.Stat(filename)
 	return err == nil
 }
+
+const userWritePermissions os.FileMode = 644
+
+func (fs *osFilesystem) AppendToFile(location string, contents string) error {
+	f, err := os.OpenFile(location, os.O_APPEND | os.O_CREATE | os.O_WRONLY, userWritePermissions)
+	defer f.Close()
+	if err != nil {
+		return err
+	}
+	if _, err = f.WriteString(contents); err != nil {
+		return err
+	}
+	return nil
+}
