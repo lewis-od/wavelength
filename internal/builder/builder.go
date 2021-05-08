@@ -1,5 +1,5 @@
 package builder
 
 type Builder interface {
-	BuildLambda(lambdaName string) error
+	BuildLambda(lambdaName string) ([]byte, error)
 }

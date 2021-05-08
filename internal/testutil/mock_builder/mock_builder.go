@@ -6,7 +6,7 @@ type MockBuilder struct {
 	mock.Mock
 }
 
-func (m *MockBuilder) BuildLambda(lambdaName string) error {
+func (m *MockBuilder) BuildLambda(lambdaName string) ([]byte, error) {
 	args := m.Called(lambdaName)
-	return args.Error(0)
+	return args.Get(0).([]byte), args.Error(1)
 }

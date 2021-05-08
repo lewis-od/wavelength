@@ -32,8 +32,8 @@ func TestOrchestrator(t *testing.T) {
 
 	t.Run("BuildLambdas", func(t *testing.T) {
 		setupTest()
-		builder.On("BuildLambda", "one").Return(nil)
-		builder.On("BuildLambda", "two").Return(nil)
+		builder.On("BuildLambda", "one").Return([]byte(""), nil)
+		builder.On("BuildLambda", "two").Return([]byte(""), nil)
 
 		err := orchestrator.BuildLambdas(lambdas)
 

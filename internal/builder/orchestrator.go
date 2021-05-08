@@ -25,13 +25,39 @@ func NewOrchestrator(builder Builder, uploader Uploader, out io.Printer) Orchest
 }
 
 func (o *orchestrator) BuildLambdas(lambdas []string) error {
+	errChan := make(chan error)
+	successChan := make(chan bool)
+
 	for _, lambda := range lambdas {
 		o.out.Printlnf("🔨 Building %s...", lambda)
-		err := o.builder.BuildLambda(lambda)
-		if err != nil {
-			return fmt.Errorf("Error building %s", lambda)
+		go func(lambdaName string) {
+			_, err := o.builder.BuildLambda(lambdaName)
+			if err != nil {
+				errChan <- fmt.Errorf("Error building %s", lambdaName)
+			} else {
+				successChan <- true
+			}
+		}(lambda)
+	}
+
+	errs := make([]error, 0, len(lambdas))
+	completedBuilds := 0
+	for {
+		select {
+		case err := <-errChan:
+			errs = append(errs, err)
+			completedBuilds++
+		case <-successChan:
+			completedBuilds++
+		}
+		if completedBuilds == len(lambdas) {
+			break
 		}
 	}
+	if len(errs) != 0 {
+		return fmt.Errorf("%s", errs)
+	}
+
 	o.out.Println("✅ Build complete")
 	return nil
 }
