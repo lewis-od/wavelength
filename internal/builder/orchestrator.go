@@ -2,6 +2,7 @@ package builder
 
 import (
 	"fmt"
+	"github.com/lewis-od/wavelength/internal/error_logger"
 	"github.com/lewis-od/wavelength/internal/io"
 )
 
@@ -11,16 +12,22 @@ type Orchestrator interface {
 }
 
 type orchestrator struct {
-	builder  Builder
-	uploader Uploader
-	out      io.Printer
+	builder   Builder
+	uploader  Uploader
+	errLogger error_logger.ErrorLogger
+	out       io.Printer
 }
 
-func NewOrchestrator(builder Builder, uploader Uploader, out io.Printer) Orchestrator {
+func NewOrchestrator(
+	builder Builder,
+	uploader Uploader,
+	errLogger error_logger.ErrorLogger,
+	out io.Printer) Orchestrator {
 	return &orchestrator{
-		builder:  builder,
-		uploader: uploader,
-		out:      out,
+		builder:   builder,
+		uploader:  uploader,
+		errLogger: errLogger,
+		out:       out,
 	}
 }
 
@@ -36,7 +43,7 @@ func (o *orchestrator) BuildLambdas(lambdas []string) error {
 
 	results := make([]*BuildResult, 0, len(lambdas))
 	for {
-		result := <- resultChan
+		result := <-resultChan
 		results = append(results, result)
 		if len(results) == len(lambdas) {
 			break
@@ -47,14 +54,26 @@ func (o *orchestrator) BuildLambdas(lambdas []string) error {
 	for _, result := range results {
 		if result.Error != nil {
 			failedLambdas = append(failedLambdas, result.LambdaName)
+			o.errLogger.AddError(mapToError(result))
 		}
 	}
 	if len(failedLambdas) != 0 {
+		err := o.errLogger.WriteLogFile()
+		if err != nil {
+			return err
+		}
 		return fmt.Errorf("Error building lambdas %s", failedLambdas)
 	}
 
 	o.out.Println("✅ Build complete")
 	return nil
+}
+
+func mapToError(result *BuildResult) *error_logger.WavelengthError {
+	return &error_logger.WavelengthError{
+		Lambda: result.LambdaName,
+		Output: result.Output,
+	}
 }
 
 func (o *orchestrator) UploadLambdas(version, bucketName string, lambdas []string) error {

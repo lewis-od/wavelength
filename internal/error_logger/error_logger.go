@@ -2,15 +2,19 @@ package error_logger
 
 import (
 	"fmt"
-	"github.com/lewis-od/wavelength/internal/builder"
 	"github.com/lewis-od/wavelength/internal/clock"
 	"github.com/lewis-od/wavelength/internal/io"
 	"strings"
 	"time"
 )
 
+type WavelengthError struct {
+	Lambda string
+	Output []byte
+}
+
 type ErrorLogger interface {
-	AddError(result *builder.BuildResult)
+	AddError(result *WavelengthError)
 	WriteLogFile() error
 }
 
@@ -19,7 +23,7 @@ func NewErrorLogger(fs io.Filesystem, c clock.Clock, logFileName string) ErrorLo
 		fs:          fs,
 		c:           c,
 		logFileName: logFileName,
-		errors:      make([]*builder.BuildResult, 0, 10),
+		errors:      make([]*WavelengthError, 0, 10),
 	}
 }
 
@@ -27,10 +31,10 @@ type errorLogger struct {
 	fs          io.Filesystem
 	c           clock.Clock
 	logFileName string
-	errors      []*builder.BuildResult
+	errors      []*WavelengthError
 }
 
-func (el *errorLogger) AddError(result *builder.BuildResult) {
+func (el *errorLogger) AddError(result *WavelengthError) {
 	el.errors = append(el.errors, result)
 }
 
@@ -39,11 +43,10 @@ func (el *errorLogger) WriteLogFile() error {
 	now := el.c.Now()
 
 	logBuilder.WriteString(fmt.Sprintf("Errors encountered during build at %s\n", now.Format(time.RFC3339)))
-	for _, buildResult := range el.errors {
-		logBuilder.WriteString(fmt.Sprintf("Lambda: %s\n", buildResult.LambdaName))
-		logBuilder.WriteString(fmt.Sprintf("Go error: %s\n", buildResult.Error))
+	for _, wavelengthError := range el.errors {
+		logBuilder.WriteString(fmt.Sprintf("Lambda: %s\n", wavelengthError.Lambda))
 		logBuilder.WriteString("Build output:\n")
-		logBuilder.Write(buildResult.Output)
+		logBuilder.Write(wavelengthError.Output)
 		logBuilder.WriteString("\n\n")
 	}
 	for i := 0; i < 80; i++ {

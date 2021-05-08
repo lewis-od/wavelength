@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/lambda"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/lewis-od/wavelength/internal/builder"
+	"github.com/lewis-od/wavelength/internal/error_logger"
 	"github.com/lewis-od/wavelength/internal/find"
 	"github.com/lewis-od/wavelength/internal/ports/aws"
 	"github.com/lewis-od/wavelength/internal/ports/lerna"
@@ -30,9 +31,11 @@ var printer = stdout.NewPrinter()
 var lernaBuilder = lerna.NewLerna(system.NewExecutor("lerna"), &projectName)
 var awsContext = context.Background()
 var lambdaUploader = aws.NewS3Uploader(newS3Client(awsContext), awsContext)
-var orchestrator = builder.NewOrchestrator(lernaBuilder, lambdaUploader, printer)
 var tfExec = terraform.NewTerraform(system.NewExecutor("terraform"))
 var filesystem = system.NewFilesystem()
+var systemClock = system.NewClock()
+var errLogger = error_logger.NewErrorLogger(filesystem, systemClock, "wavelength.log")
+var orchestrator = builder.NewOrchestrator(lernaBuilder, lambdaUploader, errLogger, printer)
 var finder = find.NewLambdaFinder(filesystem, tfExec, &lambdasDir, &artifactStorageComponent, &bucketOutputName)
 var updater = aws.NewLambdaUpdater(newLambdaClient(awsContext), awsContext)
 

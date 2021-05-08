@@ -2,7 +2,6 @@ package error_logger_test
 
 import (
 	"fmt"
-	"github.com/lewis-od/wavelength/internal/builder"
 	"github.com/lewis-od/wavelength/internal/error_logger"
 	"github.com/lewis-od/wavelength/internal/testutil/mock_filesystem"
 	"github.com/stretchr/testify/assert"
@@ -21,12 +20,10 @@ func (f *fixedClock) Now() time.Time {
 
 const expectedReport = `Errors encountered during build at 2021-05-08T15:04:05Z
 Lambda: lambda-one
-Go error: this is an error
 Build output:
 building lambda-one... done
 
 Lambda: lambda-two
-Go error: this is an error
 Build output:
 building lambda-two... done
 
@@ -48,14 +45,12 @@ func TestErrorLogger_WriteLogFile(t *testing.T) {
 
 	t.Run("Success", func(t *testing.T) {
 		setupTest()
-		resultOne := &builder.BuildResult{
-			LambdaName: "lambda-one",
-			Error:      fmt.Errorf("this is an error"),
+		resultOne := &error_logger.WavelengthError{
+			Lambda: "lambda-one",
 			Output:     []byte("building lambda-one... done"),
 		}
-		resultTwo := &builder.BuildResult{
-			LambdaName: "lambda-two",
-			Error:      fmt.Errorf("this is an error"),
+		resultTwo := &error_logger.WavelengthError{
+			Lambda: "lambda-two",
 			Output:     []byte("building lambda-two... done"),
 		}
 
