@@ -11,9 +11,9 @@ type Orchestrator interface {
 }
 
 type orchestrator struct {
-	builder   Builder
-	uploader  Uploader
-	out       io.Printer
+	builder  Builder
+	uploader Uploader
+	out      io.Printer
 }
 
 func NewOrchestrator(
@@ -21,9 +21,9 @@ func NewOrchestrator(
 	uploader Uploader,
 	out io.Printer) Orchestrator {
 	return &orchestrator{
-		builder:   builder,
-		uploader:  uploader,
-		out:       out,
+		builder:  builder,
+		uploader: uploader,
+		out:      out,
 	}
 }
 

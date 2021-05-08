@@ -37,8 +37,8 @@ func TestOrchestrator(t *testing.T) {
 			setupTest()
 			successResult := &builder.BuildResult{
 				LambdaName: "foo",
-				Error:  nil,
-				Output: []byte("success"),
+				Error:      nil,
+				Output:     []byte("success"),
 			}
 			mockBuilder.On("BuildLambda", "one").Return(successResult)
 			mockBuilder.On("BuildLambda", "two").Return(successResult)
@@ -52,13 +52,13 @@ func TestOrchestrator(t *testing.T) {
 			setupTest()
 			successResult := &builder.BuildResult{
 				LambdaName: "one",
-				Error:  nil,
-				Output: []byte("success"),
+				Error:      nil,
+				Output:     []byte("success"),
 			}
 			errorResult := &builder.BuildResult{
 				LambdaName: "two",
-				Error: fmt.Errorf("error"),
-				Output: []byte("error"),
+				Error:      fmt.Errorf("error"),
+				Output:     []byte("error"),
 			}
 			mockBuilder.On("BuildLambda", "one").Return(successResult)
 			mockBuilder.On("BuildLambda", "two").Return(errorResult)
