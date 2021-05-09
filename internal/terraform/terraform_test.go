@@ -1,8 +1,9 @@
-package terraform
+package terraform_test
 
 import (
 	"github.com/lewis-od/wavelength/internal/executor"
-	"github.com/lewis-od/wavelength/internal/testutil/mock_executor"
+	"github.com/lewis-od/wavelength/internal/mocks"
+	"github.com/lewis-od/wavelength/internal/terraform"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -19,14 +20,14 @@ const dummyOutput string = `
 
 func TestOutput(t *testing.T) {
 	directoryName := "directory"
-	mockExecutor := new(mock_executor.MockExecutor)
+	mockExecutor := new(mocks.MockExecutor)
 	mockExecutor.On(
 		"ExecuteAndCapture",
 		[]string{"output", "-json"},
 		&executor.CommandContext{Directory: directoryName},
 	).Return([]byte(dummyOutput), nil)
 
-	tf := NewTerraform(mockExecutor)
+	tf := terraform.NewTerraform(mockExecutor)
 	outputs, err := tf.Output(directoryName)
 
 	assert.Nil(t, err)

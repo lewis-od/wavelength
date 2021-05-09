@@ -1,9 +1,11 @@
-package aws
+package aws_test
 
 import (
 	"context"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/service/lambda"
+	"github.com/lewis-od/wavelength/internal/builder"
+	"github.com/lewis-od/wavelength/internal/ports/aws"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"testing"
@@ -30,41 +32,37 @@ func TestLambdaUpdater_UpdateCode_Success(t *testing.T) {
 		S3Key:        &bucketKey,
 	}
 
-	mockClient := new(mockUpdateFunctionCodeAPI)
-	mockClient.On(
-		"UpdateFunctionCode",
-		context.TODO(), expectedInput, mock.Anything,
-	).Return(&lambda.UpdateFunctionCodeOutput{}, nil)
+	var mockClient *mockUpdateFunctionCodeAPI
+	var updater builder.Updater
 
-	updater := NewLambdaUpdater(mockClient, context.TODO())
-
-	err := updater.UpdateCode(lambdaName, bucketName, bucketKey)
-
-	assert.Nil(t, err)
-	mockClient.AssertExpectations(t)
-}
-
-func TestLambdaUpdater_UpdateCode_Error(t *testing.T) {
-	lambdaName := "lambda-name"
-	bucketName := "bucket-name"
-	bucketKey := "key"
-	expectedInput := &lambda.UpdateFunctionCodeInput{
-		FunctionName: &lambdaName,
-		S3Bucket:     &bucketName,
-		S3Key:        &bucketKey,
+	setupTest := func() {
+		mockClient = new(mockUpdateFunctionCodeAPI)
+		updater = aws.NewLambdaUpdater(mockClient, context.TODO())
 	}
 
-	mockClient := new(mockUpdateFunctionCodeAPI)
-	expectedErr := fmt.Errorf("error")
-	mockClient.On(
-		"UpdateFunctionCode",
-		context.TODO(), expectedInput, mock.Anything,
-	).Return(&lambda.UpdateFunctionCodeOutput{}, expectedErr)
+	t.Run("Success", func(t *testing.T) {
+		setupTest()
+		mockClient.On(
+			"UpdateFunctionCode",
+			context.TODO(), expectedInput, mock.Anything,
+		).Return(&lambda.UpdateFunctionCodeOutput{}, nil)
 
-	updater := NewLambdaUpdater(mockClient, context.TODO())
+		err := updater.UpdateCode(lambdaName, bucketName, bucketKey)
 
-	err := updater.UpdateCode(lambdaName, bucketName, bucketKey)
+		assert.Nil(t, err)
+		mockClient.AssertExpectations(t)
+	})
+	t.Run("Error", func(t *testing.T) {
+		setupTest()
+		expectedErr := fmt.Errorf("error")
+		mockClient.On(
+			"UpdateFunctionCode",
+			context.TODO(), expectedInput, mock.Anything,
+		).Return(&lambda.UpdateFunctionCodeOutput{}, expectedErr)
 
-	assert.Equal(t, expectedErr, err)
-	mockClient.AssertExpectations(t)
+		err := updater.UpdateCode(lambdaName, bucketName, bucketKey)
+
+		assert.Equal(t, expectedErr, err)
+		mockClient.AssertExpectations(t)
+	})
 }

@@ -1,4 +1,4 @@
-package mock_display
+package mocks
 
 import (
 	"github.com/lewis-od/wavelength/internal/progress"

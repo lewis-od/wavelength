@@ -1,9 +1,11 @@
-package aws
+package aws_test
 
 import (
 	"context"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/lewis-od/wavelength/internal/builder"
+	"github.com/lewis-od/wavelength/internal/ports/aws"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"testing"
@@ -22,45 +24,47 @@ func (m *mockS3Client) PutObject(ctx context.Context,
 	return args.Get(0).(*s3.PutObjectOutput), args.Error(1)
 }
 
-func TestS3Uploader_UploadLambda_Success(t *testing.T) {
-	mockClient := new(mockS3Client)
-	mockClient.On(
-		"PutObject",
-		context.TODO(), mock.Anything, mock.Anything, mock.Anything,
-	).Return(&s3.PutObjectOutput{}, nil)
+func TestS3Uploader_UploadLambda(t *testing.T) {
+	var mockClient *mockS3Client
+	var uploader builder.Uploader
 
-	uploader := NewS3Uploader(mockClient, context.TODO())
+	setupTest := func() {
+		mockClient = new(mockS3Client)
+		uploader = aws.NewS3Uploader(mockClient, context.TODO())
+	}
 
-	result := uploader.UploadLambda("test", "artifact-bucket", "my-lambda", "testdata/artifact.zip")
+	t.Run("Success", func(t *testing.T) {
+		setupTest()
+		mockClient.On(
+			"PutObject",
+			context.TODO(), mock.Anything, mock.Anything, mock.Anything,
+		).Return(&s3.PutObjectOutput{}, nil)
 
-	assert.Nil(t, result.Error)
-	mockClient.AssertExpectations(t)
-	assert.Equal(t, "test/my-lambda.zip", *mockClient.input.Key)
-}
+		result := uploader.UploadLambda("test", "artifact-bucket", "my-lambda", "testdata/artifact.zip")
 
-func TestS3Uploader_UploadLambda_FileOpenError(t *testing.T) {
-	mockClient := new(mockS3Client)
+		assert.Nil(t, result.Error)
+		mockClient.AssertExpectations(t)
+		assert.Equal(t, "test/my-lambda.zip", *mockClient.input.Key)
+	})
+	t.Run("FileOpenError", func(t *testing.T) {
+		setupTest()
 
-	uploader := NewS3Uploader(mockClient, context.TODO())
+		result := uploader.UploadLambda("test", "artifact-bucket", "my-lambda", "testdata/missing.zip")
 
-	result := uploader.UploadLambda("test", "artifact-bucket", "my-lambda", "testdata/missing.zip")
+		assert.NotNil(t, result.Error)
+		mockClient.AssertExpectations(t)
+	})
+	t.Run("D3PutError", func(t *testing.T) {
+		setupTest()
+		uploadError := fmt.Errorf("upload error")
+		mockClient.On(
+			"PutObject",
+			context.TODO(), mock.Anything, mock.Anything, mock.Anything,
+		).Return(&s3.PutObjectOutput{}, uploadError)
 
-	assert.NotNil(t, result.Error)
-	mockClient.AssertExpectations(t)
-}
+		result := uploader.UploadLambda("test", "artifact-bucket", "my-lambda", "testdata/artifact.zip")
 
-func TestS3Uploader_UploadLambda_S3PutError(t *testing.T) {
-	mockClient := new(mockS3Client)
-	uploadError := fmt.Errorf("upload error")
-	mockClient.On(
-		"PutObject",
-		context.TODO(), mock.Anything, mock.Anything, mock.Anything,
-	).Return(&s3.PutObjectOutput{}, uploadError)
-
-	uploader := NewS3Uploader(mockClient, context.TODO())
-
-	result := uploader.UploadLambda("test", "artifact-bucket", "my-lambda", "testdata/artifact.zip")
-
-	assert.Equal(t, uploadError, result.Error)
-	mockClient.AssertExpectations(t)
+		assert.Equal(t, uploadError, result.Error)
+		mockClient.AssertExpectations(t)
+	})
 }

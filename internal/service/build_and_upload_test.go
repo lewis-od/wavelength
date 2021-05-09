@@ -1,11 +1,10 @@
-package service
+package service_test
 
 import (
 	"fmt"
 	"github.com/lewis-od/wavelength/internal/builder"
-	"github.com/lewis-od/wavelength/internal/testutil/mock_finder"
-	"github.com/lewis-od/wavelength/internal/testutil/mock_orchestrator"
-	"github.com/lewis-od/wavelength/internal/testutil/mock_printer"
+	"github.com/lewis-od/wavelength/internal/mocks"
+	"github.com/lewis-od/wavelength/internal/service"
 	"github.com/stretchr/testify/mock"
 	"testing"
 )
@@ -15,16 +14,16 @@ func TestBuildAndUploadService_Run(t *testing.T) {
 	lambdas := []string{"one", "two"}
 	bucketName := "some-bucket"
 
-	var orchestrator *mock_orchestrator.MockOrchestrator
-	var finder *mock_finder.MockFinder
-	var printer *mock_printer.MockPrinter
-	var command BuildAndUploadService
+	var orchestrator *mocks.MockOrchestrator
+	var finder *mocks.MockFinder
+	var printer *mocks.MockPrinter
+	var command service.BuildAndUploadService
 
 	setupTest := func() {
-		orchestrator = new(mock_orchestrator.MockOrchestrator)
-		finder = new(mock_finder.MockFinder)
-		printer = new(mock_printer.MockPrinter)
-		command = NewBuildAndUploadService(orchestrator, finder, printer)
+		orchestrator = new(mocks.MockOrchestrator)
+		finder = new(mocks.MockFinder)
+		printer = new(mocks.MockPrinter)
+		command = service.NewBuildAndUploadService(orchestrator, finder, printer)
 	}
 
 	assertExpectationsOnMocks := func(t *testing.T) {

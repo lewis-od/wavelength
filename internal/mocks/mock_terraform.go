@@ -1,4 +1,4 @@
-package mock_terraform
+package mocks
 
 import (
 	"github.com/lewis-od/wavelength/internal/terraform"

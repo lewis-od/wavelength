@@ -1,11 +1,11 @@
-package find
+package find_test
 
 import (
 	"fmt"
+	"github.com/lewis-od/wavelength/internal/find"
 	"github.com/lewis-od/wavelength/internal/io"
+	"github.com/lewis-od/wavelength/internal/mocks"
 	"github.com/lewis-od/wavelength/internal/terraform"
-	"github.com/lewis-od/wavelength/internal/testutil/mock_filesystem"
-	"github.com/lewis-od/wavelength/internal/testutil/mock_terraform"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"testing"
@@ -16,14 +16,14 @@ func TestLambdaFinder(t *testing.T) {
 	artifactStorageComponent := "terraform/artifact-storage"
 	outputName := "bucket_name"
 
-	var filesystem *mock_filesystem.MockFilesystem
-	var tf *mock_terraform.MockTerraform
-	var finder Finder
+	var filesystem *mocks.MockFilesystem
+	var tf *mocks.MockTerraform
+	var finder find.Finder
 
 	setupTest := func() {
-		filesystem = new(mock_filesystem.MockFilesystem)
-		tf = new(mock_terraform.MockTerraform)
-		finder = NewLambdaFinder(filesystem, tf, &lambdasDir, &artifactStorageComponent, &outputName)
+		filesystem = new(mocks.MockFilesystem)
+		tf = new(mocks.MockTerraform)
+		finder = find.NewLambdaFinder(filesystem, tf, &lambdasDir, &artifactStorageComponent, &outputName)
 	}
 
 	assertExpectationsOnMocks := func(t *testing.T) {
