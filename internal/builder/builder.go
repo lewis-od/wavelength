@@ -2,8 +2,8 @@ package builder
 
 type BuildResult struct {
 	LambdaName string
-	Error error
-	Output []byte
+	Error      error
+	Output     []byte
 }
 
 type Builder interface {

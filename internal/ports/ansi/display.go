@@ -11,7 +11,7 @@ func NewAnsiDisplay(term Terminal) progress.BuildDisplay {
 		statuses: make(map[string]*buildStatus),
 		numRows:  0,
 		endRow:   0,
-		action: progress.Build,
+		action:   progress.Build,
 	}
 }
 

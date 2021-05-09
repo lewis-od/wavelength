@@ -26,7 +26,7 @@ func (l *lernaBuilder) BuildLambda(lambdaName string) *builder.BuildResult {
 	output, err := l.executor.ExecuteAndCapture([]string{"run", "build", "--scope", scope, "--include-dependencies"}, cmdContext)
 	return &builder.BuildResult{
 		LambdaName: lambdaName,
-		Error: err,
-		Output: output,
+		Error:      err,
+		Output:     output,
 	}
 }

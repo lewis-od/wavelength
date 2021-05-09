@@ -5,6 +5,6 @@ type CommandContext struct {
 }
 
 type CommandExecutor interface {
-	Execute(args[] string) (error)
+	Execute(args []string) error
 	ExecuteAndCapture(args []string, context *CommandContext) ([]byte, error)
 }

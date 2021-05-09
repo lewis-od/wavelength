@@ -12,8 +12,8 @@ type Finder interface {
 }
 
 type lambdaFinder struct {
-	filesystem                           io.Filesystem
-	tf                                   terraform.Terraform
+	filesystem                                       io.Filesystem
+	tf                                               terraform.Terraform
 	lambdasDir, artifactStorageComponent, outputName *string
 }
 
@@ -25,7 +25,7 @@ func NewLambdaFinder(filesystem io.Filesystem,
 		tf:                       tf,
 		lambdasDir:               lambdasDir,
 		artifactStorageComponent: artifactStorageComponent,
-		outputName: outputName,
+		outputName:               outputName,
 	}
 }
 

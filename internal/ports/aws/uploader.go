@@ -51,7 +51,7 @@ func (s *s3Uploader) UploadLambda(version, bucketName, lambdaName, artifactLocat
 	}
 	return &builder.BuildResult{
 		LambdaName: lambdaName,
-		Error: err,
-		Output: []byte(output),
+		Error:      err,
+		Output:     []byte(output),
 	}
 }
