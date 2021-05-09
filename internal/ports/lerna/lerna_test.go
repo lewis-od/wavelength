@@ -28,8 +28,8 @@ func TestBuildLambda(t *testing.T) {
 
 	expectedResult := &builder.BuildResult{
 		LambdaName: lambdaName,
-		Error:  nil,
-		Output: buildOutput,
+		Error:      nil,
+		Output:     buildOutput,
 	}
 	assert.Equal(t, expectedResult, result)
 	mockExecutor.AssertExpectations(t)

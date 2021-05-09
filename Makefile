@@ -1,4 +1,4 @@
-.PHONY: default build test
+.PHONY: default build test deps fmt fmt-ci
 
 default: test build
 
@@ -7,3 +7,12 @@ build:
 
 test:
 	go test -v ./...
+
+deps:
+	go get ./...
+
+fmt:
+	go fmt ./...
+
+fmt-ci:
+	if [ -z $$( go fmt ./... ) ]; then exit 0; else exit 1; fi

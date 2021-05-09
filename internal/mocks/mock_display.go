@@ -20,4 +20,3 @@ func (m *MockDisplay) Started(lambdaName string) {
 func (m *MockDisplay) Completed(lambdaName string, wasSuccessful bool) {
 	m.Called(lambdaName, wasSuccessful)
 }
-

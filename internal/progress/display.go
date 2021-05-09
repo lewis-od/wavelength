@@ -1,6 +1,5 @@
 package progress
 
-
 type Action struct {
 	InProgress string
 	Success    string

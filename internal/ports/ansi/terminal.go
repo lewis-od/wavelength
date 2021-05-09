@@ -25,7 +25,7 @@ func NewAnsiTerminal() Terminal {
 	return &ansiTerminal{}
 }
 
-type ansiTerminal struct {}
+type ansiTerminal struct{}
 
 var outputRegexp = regexp.MustCompile(`(?P<row>\d+);(?P<col>\d+)`)
 
@@ -56,7 +56,7 @@ func (t *ansiTerminal) GetPosition() (CursorPosition, error) {
 	return CursorPosition{}, fmt.Errorf("unable to determine cursor location")
 }
 
-func parseOutput(output string) (CursorPosition, error)  {
+func parseOutput(output string) (CursorPosition, error) {
 	matches := outputRegexp.FindStringSubmatch(output)
 	rowIndex, colIndex := outputRegexp.SubexpIndex("row"), outputRegexp.SubexpIndex("col")
 	rowStr, colStr := matches[rowIndex], matches[colIndex]
@@ -78,6 +78,7 @@ func parseOutput(output string) (CursorPosition, error)  {
 }
 
 type state bool
+
 const on state = true
 const off state = false
 

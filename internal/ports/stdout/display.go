@@ -11,7 +11,7 @@ func NewBasicDisplay() progress.BuildDisplay {
 	}
 }
 
-type basicDisplay struct{
+type basicDisplay struct {
 	action progress.Action
 }
 
