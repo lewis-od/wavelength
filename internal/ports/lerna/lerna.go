@@ -18,8 +18,15 @@ func NewLerna(commandExecutor executor.CommandExecutor, projectName *string) bui
 	}
 }
 
-func (l *lernaBuilder) BuildLambda(lambdaName string) (err error) {
+func (l *lernaBuilder) BuildLambda(lambdaName string) *builder.BuildResult {
 	scope := fmt.Sprintf("@%s/%s", *l.projectName, lambdaName)
-	err = l.executor.Execute([]string{"run", "build", "--scope", scope, "--include-dependencies"})
-	return
+	cmdContext := &executor.CommandContext{
+		Directory: ".",
+	}
+	output, err := l.executor.ExecuteAndCapture([]string{"run", "build", "--scope", scope, "--include-dependencies"}, cmdContext)
+	return &builder.BuildResult{
+		LambdaName: lambdaName,
+		Error: err,
+		Output: output,
+	}
 }

@@ -26,12 +26,16 @@ func NewS3Uploader(client S3PutObjectAPI, ctx context.Context) builder.Uploader 
 	}
 }
 
-func (s *s3Uploader) UploadLambda(version, bucketName, lambdaName, artifactLocation string) error {
+func (s *s3Uploader) UploadLambda(version, bucketName, lambdaName, artifactLocation string) *builder.BuildResult {
 	uploadLocation := fmt.Sprintf("%s/%s.zip", version, lambdaName)
 
 	file, err := os.Open(artifactLocation)
 	if err != nil {
-		return err
+		return &builder.BuildResult{
+			LambdaName: lambdaName,
+			Error:      err,
+			Output:     []byte(err.Error()),
+		}
 	}
 	defer file.Close()
 
@@ -41,5 +45,13 @@ func (s *s3Uploader) UploadLambda(version, bucketName, lambdaName, artifactLocat
 		Body:   file,
 	}
 	_, err = s.client.PutObject(s.ctx, input)
-	return err
+	output := ""
+	if err != nil {
+		output = err.Error()
+	}
+	return &builder.BuildResult{
+		LambdaName: lambdaName,
+		Error: err,
+		Output: []byte(output),
+	}
 }

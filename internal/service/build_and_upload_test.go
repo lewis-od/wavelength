@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"github.com/lewis-od/wavelength/internal/builder"
 	"github.com/lewis-od/wavelength/internal/testutil/mock_finder"
 	"github.com/lewis-od/wavelength/internal/testutil/mock_orchestrator"
 	"github.com/lewis-od/wavelength/internal/testutil/mock_printer"
@@ -35,17 +36,18 @@ func TestBuildAndUploadService_Run(t *testing.T) {
 		orchestrator.On(
 			"BuildLambdas",
 			lambdas,
-		).Return(nil)
+		).Return(make([]*builder.BuildResult, 0, 0))
 		orchestrator.On(
 			"UploadLambdas",
 			version, bucketName, lambdas,
-		).Return(nil)
+		).Return(make([]*builder.BuildResult, 0, 0))
 
 		finder.On("FindLambdas", lambdas).Return(lambdas, nil)
 		finder.On("FindArtifactBucketName").Return(bucketName, nil)
 
 		printer.On("Printlnf", mock.Anything, mock.Anything).Return()
 		printer.On("Printlnf", mock.Anything, mock.Anything, mock.Anything).Return()
+		printer.On("Println", mock.Anything).Return()
 
 		command.Run(version, lambdas, false)
 
@@ -56,29 +58,35 @@ func TestBuildAndUploadService_Run(t *testing.T) {
 		orchestrator.On(
 			"UploadLambdas",
 			version, bucketName, lambdas,
-		).Return(nil)
+		).Return(make([]*builder.BuildResult, 0, 0))
 
 		finder.On("FindLambdas", lambdas).Return(lambdas, nil)
 		finder.On("FindArtifactBucketName").Return(bucketName, nil)
 
 		printer.On("Printlnf", mock.Anything, mock.Anything).Return()
 		printer.On("Printlnf", mock.Anything, mock.Anything, mock.Anything).Return()
+		printer.On("Println", mock.Anything).Return()
 
 		command.Run(version, lambdas, true)
 
 		assertExpectationsOnMocks(t)
 	})
-	t.Run("OrchestrationError", func(t *testing.T) {
+	t.Run("BuildError", func(t *testing.T) {
 		setupTest()
-		err := fmt.Errorf("error text")
-		orchestrator.On("BuildLambdas", lambdas).Return(err)
+		buildErr := &builder.BuildResult{
+			LambdaName: "lambda-one",
+			Error:      fmt.Errorf("error"),
+			Output:     []byte("output"),
+		}
+		orchestrator.On("BuildLambdas", lambdas).Return([]*builder.BuildResult{buildErr})
 
 		finder.On("FindLambdas", lambdas).Return(lambdas, nil)
 		finder.On("FindArtifactBucketName").Return(bucketName, nil)
 
 		printer.On("Printlnf", "🏗  Orchestrating upload of version %s of %s", []interface{}{version, lambdas}).Return()
 		printer.On("Printlnf", "🪣 Found artifact bucket %s", []interface{}{bucketName}).Return()
-		printer.On("PrintErr", err).Return()
+		errToPrint := fmt.Errorf("Error building lambda %s\n%s\n", "lambda-one", "output")
+		printer.On("PrintErr", errToPrint).Return()
 
 		command.Run(version, lambdas, false)
 

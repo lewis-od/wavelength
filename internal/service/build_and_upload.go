@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"github.com/lewis-od/wavelength/internal/builder"
 	"github.com/lewis-od/wavelength/internal/find"
 	"github.com/lewis-od/wavelength/internal/io"
@@ -44,15 +45,36 @@ func (c *buildAndUploadService) Run(version string, lambdas []string, skipBuild 
 	c.out.Printlnf("🪣 Found artifact bucket %s", bucketName)
 
 	if !skipBuild {
-		err = c.orchestrator.BuildLambdas(lambdasToUpload)
-		if err != nil {
-			c.out.PrintErr(err)
+		failedBuilds := c.orchestrator.BuildLambdas(lambdasToUpload)
+		if len(failedBuilds) != 0 {
+			c.printBuildErrors(failedBuilds)
 			return
 		}
 	}
-	err = c.orchestrator.UploadLambdas(version, bucketName, lambdasToUpload)
-	if err != nil {
-		c.out.PrintErr(err)
+
+	uploadErrors := c.orchestrator.UploadLambdas(version, bucketName, lambdasToUpload)
+	if len(uploadErrors) != 0 {
+		c.printUploadErrors(uploadErrors)
 		return
+	}
+
+	c.out.Println("✅ Done!")
+}
+
+func (c *buildAndUploadService) printBuildErrors(buildResults []*builder.BuildResult) {
+	c.printErrors(build, buildResults)
+}
+
+func (c *buildAndUploadService) printUploadErrors(buildResults []*builder.BuildResult) {
+	c.printErrors(upload, buildResults)
+}
+
+const build = "building"
+const upload = "uploading"
+
+func (c *buildAndUploadService) printErrors(action string, buildResults []*builder.BuildResult) {
+	for _, result := range buildResults {
+		err := fmt.Errorf("Error %s lambda %s\n%s\n", action, result.LambdaName, result.Output)
+		c.out.PrintErr(err)
 	}
 }

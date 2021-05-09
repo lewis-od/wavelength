@@ -31,9 +31,9 @@ func TestS3Uploader_UploadLambda_Success(t *testing.T) {
 
 	uploader := NewS3Uploader(mockClient, context.TODO())
 
-	err := uploader.UploadLambda("test", "artifact-bucket", "my-lambda", "testdata/artifact.zip")
+	result := uploader.UploadLambda("test", "artifact-bucket", "my-lambda", "testdata/artifact.zip")
 
-	assert.Nil(t, err)
+	assert.Nil(t, result.Error)
 	mockClient.AssertExpectations(t)
 	assert.Equal(t, "test/my-lambda.zip", *mockClient.input.Key)
 }
@@ -43,9 +43,9 @@ func TestS3Uploader_UploadLambda_FileOpenError(t *testing.T) {
 
 	uploader := NewS3Uploader(mockClient, context.TODO())
 
-	err := uploader.UploadLambda("test", "artifact-bucket", "my-lambda", "testdata/missing.zip")
+	result := uploader.UploadLambda("test", "artifact-bucket", "my-lambda", "testdata/missing.zip")
 
-	assert.NotNil(t, err)
+	assert.NotNil(t, result.Error)
 	mockClient.AssertExpectations(t)
 }
 
@@ -59,8 +59,8 @@ func TestS3Uploader_UploadLambda_S3PutError(t *testing.T) {
 
 	uploader := NewS3Uploader(mockClient, context.TODO())
 
-	err := uploader.UploadLambda("test", "artifact-bucket", "my-lambda", "testdata/artifact.zip")
+	result := uploader.UploadLambda("test", "artifact-bucket", "my-lambda", "testdata/artifact.zip")
 
-	assert.Equal(t, uploadError, err)
+	assert.Equal(t, uploadError, result.Error)
 	mockClient.AssertExpectations(t)
 }
