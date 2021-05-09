@@ -3,6 +3,7 @@ package builder
 import (
 	"fmt"
 	"github.com/lewis-od/wavelength/internal/io"
+	"github.com/lewis-od/wavelength/internal/progress"
 )
 
 type Orchestrator interface {
@@ -13,16 +14,19 @@ type Orchestrator interface {
 type orchestrator struct {
 	builder  Builder
 	uploader Uploader
+	display  progress.BuildDisplay
 	out      io.Printer
 }
 
 func NewOrchestrator(
 	builder Builder,
 	uploader Uploader,
+	display progress.BuildDisplay,
 	out io.Printer) Orchestrator {
 	return &orchestrator{
 		builder:  builder,
 		uploader: uploader,
+		display:  display,
 		out:      out,
 	}
 }
@@ -31,7 +35,9 @@ func (o *orchestrator) BuildLambdas(lambdas []string) []*BuildResult {
 	resultChan := make(chan *BuildResult)
 
 	for _, lambda := range lambdas {
-		o.out.Printlnf("🔨 Building %s...", lambda)
+		o.display.Started(lambda)
+	}
+	for _, lambda := range lambdas {
 		go func(lambdaName string) {
 			resultChan <- o.builder.BuildLambda(lambdaName)
 		}(lambda)
@@ -41,6 +47,7 @@ func (o *orchestrator) BuildLambdas(lambdas []string) []*BuildResult {
 	for {
 		result := <-resultChan
 		results = append(results, result)
+		o.display.Completed(result.LambdaName, result.Error == nil)
 		if len(results) == len(lambdas) {
 			break
 		}
@@ -51,9 +58,6 @@ func (o *orchestrator) BuildLambdas(lambdas []string) []*BuildResult {
 		if result.Error != nil {
 			failedLambdas = append(failedLambdas, result)
 		}
-	}
-	if len(failedLambdas) == 0 {
-		o.out.Println("✅ Build complete")
 	}
 	return failedLambdas
 }

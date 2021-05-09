@@ -8,10 +8,12 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/lewis-od/wavelength/internal/builder"
 	"github.com/lewis-od/wavelength/internal/find"
+	"github.com/lewis-od/wavelength/internal/ports/ansi"
 	"github.com/lewis-od/wavelength/internal/ports/aws"
 	"github.com/lewis-od/wavelength/internal/ports/lerna"
 	"github.com/lewis-od/wavelength/internal/ports/stdout"
 	"github.com/lewis-od/wavelength/internal/ports/system"
+	"github.com/lewis-od/wavelength/internal/progress"
 	"github.com/lewis-od/wavelength/internal/terraform"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -32,9 +34,17 @@ var awsContext = context.Background()
 var lambdaUploader = aws.NewS3Uploader(newS3Client(awsContext), awsContext)
 var tfExec = terraform.NewTerraform(system.NewExecutor("terraform"))
 var filesystem = system.NewFilesystem()
-var orchestrator = builder.NewOrchestrator(lernaBuilder, lambdaUploader, printer)
+var orchestrator = builder.NewOrchestrator(lernaBuilder, lambdaUploader, createDisplay(), printer)
 var finder = find.NewLambdaFinder(filesystem, tfExec, &lambdasDir, &artifactStorageComponent, &bucketOutputName)
 var updater = aws.NewLambdaUpdater(newLambdaClient(awsContext), awsContext)
+
+func createDisplay() progress.BuildDisplay {
+	if ansi.StdoutIsTerminal() {
+		return ansi.NewAnsiDisplay(ansi.NewAnsiTerminal())
+	} else {
+		return stdout.NewBasicDisplay()
+	}
+}
 
 func newS3Client(ctx context.Context) *s3.Client {
 	cfg, err := config.LoadDefaultConfig(ctx)
