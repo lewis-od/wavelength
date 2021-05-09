@@ -1,7 +1,8 @@
-package service
+package service_test
 
 import (
 	"fmt"
+	"github.com/lewis-od/wavelength/internal/service"
 	"github.com/lewis-od/wavelength/internal/testutil/mock_finder"
 	"github.com/lewis-od/wavelength/internal/testutil/mock_printer"
 	"github.com/lewis-od/wavelength/internal/testutil/mock_updater"
@@ -20,13 +21,13 @@ func TestUpdateService_Run(t *testing.T) {
 	var finder *mock_finder.MockFinder
 	var updater *mock_updater.MockUpdater
 	var printer *mock_printer.MockPrinter
-	var updateService UpdateService
+	var updateService service.UpdateService
 
 	setupTest := func() {
 		finder = new(mock_finder.MockFinder)
 		updater = new(mock_updater.MockUpdater)
 		printer = new(mock_printer.MockPrinter)
-		updateService = NewUpdateService(finder, updater, printer, &projectName)
+		updateService = service.NewUpdateService(finder, updater, printer, &projectName)
 	}
 
 	t.Run("Success", func(t *testing.T) {

@@ -1,8 +1,9 @@
-package service
+package service_test
 
 import (
 	"fmt"
 	"github.com/lewis-od/wavelength/internal/builder"
+	"github.com/lewis-od/wavelength/internal/service"
 	"github.com/lewis-od/wavelength/internal/testutil/mock_finder"
 	"github.com/lewis-od/wavelength/internal/testutil/mock_orchestrator"
 	"github.com/lewis-od/wavelength/internal/testutil/mock_printer"
@@ -18,13 +19,13 @@ func TestBuildAndUploadService_Run(t *testing.T) {
 	var orchestrator *mock_orchestrator.MockOrchestrator
 	var finder *mock_finder.MockFinder
 	var printer *mock_printer.MockPrinter
-	var command BuildAndUploadService
+	var command service.BuildAndUploadService
 
 	setupTest := func() {
 		orchestrator = new(mock_orchestrator.MockOrchestrator)
 		finder = new(mock_finder.MockFinder)
 		printer = new(mock_printer.MockPrinter)
-		command = NewBuildAndUploadService(orchestrator, finder, printer)
+		command = service.NewBuildAndUploadService(orchestrator, finder, printer)
 	}
 
 	assertExpectationsOnMocks := func(t *testing.T) {

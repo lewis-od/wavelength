@@ -1,7 +1,8 @@
-package terraform
+package terraform_test
 
 import (
 	"github.com/lewis-od/wavelength/internal/executor"
+	"github.com/lewis-od/wavelength/internal/terraform"
 	"github.com/lewis-od/wavelength/internal/testutil/mock_executor"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -26,7 +27,7 @@ func TestOutput(t *testing.T) {
 		&executor.CommandContext{Directory: directoryName},
 	).Return([]byte(dummyOutput), nil)
 
-	tf := NewTerraform(mockExecutor)
+	tf := terraform.NewTerraform(mockExecutor)
 	outputs, err := tf.Output(directoryName)
 
 	assert.Nil(t, err)
