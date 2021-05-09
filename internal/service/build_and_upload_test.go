@@ -85,7 +85,7 @@ func TestBuildAndUploadService_Run(t *testing.T) {
 
 		printer.On("Printlnf", "🏗  Orchestrating upload of version %s of %s", []interface{}{version, lambdas}).Return()
 		printer.On("Printlnf", "🪣 Found artifact bucket %s", []interface{}{bucketName}).Return()
-		errToPrint := fmt.Errorf("Error building lambda %s\n%s\n%s\n", "lambda-one", "error", "output")
+		errToPrint := fmt.Errorf("Error building lambda %s\n%s\n", "lambda-one", "output")
 		printer.On("PrintErr", errToPrint).Return()
 
 		command.Run(version, lambdas, false)

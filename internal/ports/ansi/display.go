@@ -10,7 +10,8 @@ func NewAnsiDisplay(term Terminal) progress.BuildDisplay {
 		term:     term,
 		statuses: make(map[string]*buildStatus),
 		numRows:  0,
-		endRow: 0,
+		endRow:   0,
+		action: progress.Build,
 	}
 }
 
@@ -23,7 +24,15 @@ type ansiDisplay struct {
 	term     Terminal
 	statuses map[string]*buildStatus
 	numRows  int
-	endRow int
+	endRow   int
+	action   progress.Action
+}
+
+func (d *ansiDisplay) Init(action progress.Action) {
+	d.action = action
+	d.numRows = 0
+	d.endRow = 0
+	d.statuses = make(map[string]*buildStatus)
 }
 
 func (d *ansiDisplay) Started(lambdaName string) {
@@ -31,7 +40,7 @@ func (d *ansiDisplay) Started(lambdaName string) {
 		row:       d.numRows,
 		completed: false,
 	}
-	message := fmt.Sprintf("🔨 Building %s...\n", lambdaName)
+	message := fmt.Sprintf(d.action.InProgress, lambdaName)
 	d.term.Print(message)
 	d.numRows++
 }
@@ -55,9 +64,9 @@ func (d *ansiDisplay) Completed(lambdaName string, wasSuccessful bool) {
 
 	message := ""
 	if wasSuccessful {
-		message = fmt.Sprintf("✅ Building %s... done", lambdaName)
+		message = fmt.Sprintf(d.action.Success, lambdaName)
 	} else {
-		message = fmt.Sprintf("❌ Building %s... error", lambdaName)
+		message = fmt.Sprintf(d.action.Error, lambdaName)
 	}
 
 	d.term.Print(message)

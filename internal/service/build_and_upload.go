@@ -74,7 +74,7 @@ const upload = "uploading"
 
 func (c *buildAndUploadService) printErrors(action string, buildResults []*builder.BuildResult) {
 	for _, result := range buildResults {
-		err := fmt.Errorf("Error %s lambda %s\n%s\n%s\n", action, result.LambdaName, result.Error, result.Output)
+		err := fmt.Errorf("Error %s lambda %s\n%s\n", action, result.LambdaName, result.Output)
 		c.out.PrintErr(err)
 	}
 }

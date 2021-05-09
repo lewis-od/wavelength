@@ -3,6 +3,7 @@ package builder_test
 import (
 	"fmt"
 	"github.com/lewis-od/wavelength/internal/builder"
+	"github.com/lewis-od/wavelength/internal/progress"
 	"github.com/lewis-od/wavelength/internal/testutil/mock_builder"
 	"github.com/lewis-od/wavelength/internal/testutil/mock_display"
 	"github.com/lewis-od/wavelength/internal/testutil/mock_printer"
@@ -51,6 +52,7 @@ func TestOrchestrator(t *testing.T) {
 			mockBuilder.On("BuildLambda", "one").Return(successOne)
 			mockBuilder.On("BuildLambda", "two").Return(successTwo)
 
+			mockDisplay.On("Init", progress.Build).Return()
 			mockDisplay.On("Started", "one").Return()
 			mockDisplay.On("Started", "two").Return()
 			mockDisplay.On("Completed", "one", true).Return()
@@ -76,6 +78,7 @@ func TestOrchestrator(t *testing.T) {
 			mockBuilder.On("BuildLambda", "one").Return(successResult)
 			mockBuilder.On("BuildLambda", "two").Return(errorResult)
 
+			mockDisplay.On("Init", progress.Build).Return()
 			mockDisplay.On("Started", "one").Return()
 			mockDisplay.On("Started", "two").Return()
 			mockDisplay.On("Completed", "one", true).Return()
@@ -95,13 +98,24 @@ func TestOrchestrator(t *testing.T) {
 		t.Run("Success", func(t *testing.T) {
 			setupTest()
 
-			successResult := &builder.BuildResult{
+			successOne := &builder.BuildResult{
 				LambdaName: "one",
 				Error:      nil,
 				Output:     []byte(""),
 			}
-			mockUploader.On("UploadLambda", version, bucketName, "one", "lambdas/one/dist/one.zip").Return(successResult)
-			mockUploader.On("UploadLambda", version, bucketName, "two", "lambdas/two/dist/two.zip").Return(successResult)
+			successTwo := &builder.BuildResult{
+				LambdaName: "two",
+				Error:      nil,
+				Output:     []byte(""),
+			}
+			mockUploader.On("UploadLambda", version, bucketName, "one", "lambdas/one/dist/one.zip").Return(successOne)
+			mockUploader.On("UploadLambda", version, bucketName, "two", "lambdas/two/dist/two.zip").Return(successTwo)
+
+			mockDisplay.On("Init", progress.Upload).Return()
+			mockDisplay.On("Started", "one").Return()
+			mockDisplay.On("Started", "two").Return()
+			mockDisplay.On("Completed", "one", true).Return()
+			mockDisplay.On("Completed", "two", true).Return()
 
 			failedUploads := orchestrator.UploadLambdas(version, bucketName, lambdas)
 
@@ -123,6 +137,12 @@ func TestOrchestrator(t *testing.T) {
 			}
 			mockUploader.On("UploadLambda", version, bucketName, "one", "lambdas/one/dist/one.zip").Return(successResult)
 			mockUploader.On("UploadLambda", version, bucketName, "two", "lambdas/two/dist/two.zip").Return(errorResult)
+
+			mockDisplay.On("Init", progress.Upload).Return()
+			mockDisplay.On("Started", "one").Return()
+			mockDisplay.On("Started", "two").Return()
+			mockDisplay.On("Completed", "one", true).Return()
+			mockDisplay.On("Completed", "two", false).Return()
 
 			failedUploads := orchestrator.UploadLambdas(version, bucketName, lambdas)
 

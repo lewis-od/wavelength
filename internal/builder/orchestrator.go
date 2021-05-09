@@ -34,6 +34,7 @@ func NewOrchestrator(
 func (o *orchestrator) BuildLambdas(lambdas []string) []*BuildResult {
 	resultChan := make(chan *BuildResult)
 
+	o.display.Init(progress.Build)
 	for _, lambda := range lambdas {
 		o.display.Started(lambda)
 	}
@@ -59,8 +60,11 @@ func (o *orchestrator) BuildLambdas(lambdas []string) []*BuildResult {
 func (o *orchestrator) UploadLambdas(version, bucketName string, lambdas []string) []*BuildResult {
 	resultChan := make(chan *BuildResult)
 
+	o.display.Init(progress.Upload)
 	for _, lambda := range lambdas {
-		o.out.Printlnf("☁️  Uploading %s...", lambda)
+		o.display.Started(lambda)
+	}
+	for _, lambda := range lambdas {
 		go func(lambdaName string) {
 			artifact := fmt.Sprintf("lambdas/%s/dist/%s.zip", lambdaName, lambdaName)
 			resultChan <- o.uploader.UploadLambda(version, bucketName, lambdaName, artifact)
@@ -71,6 +75,7 @@ func (o *orchestrator) UploadLambdas(version, bucketName string, lambdas []strin
 	for {
 		result := <-resultChan
 		results = append(results, result)
+		o.display.Completed(result.LambdaName, result.Error == nil)
 		if len(results) == len(lambdas) {
 			break
 		}

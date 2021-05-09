@@ -6,19 +6,27 @@ import (
 )
 
 func NewBasicDisplay() progress.BuildDisplay {
-	return &basicDisplay{}
+	return &basicDisplay{
+		action: progress.Build,
+	}
 }
 
-type basicDisplay struct{}
+type basicDisplay struct{
+	action progress.Action
+}
+
+func (b *basicDisplay) Init(action progress.Action) {
+	b.action = action
+}
 
 func (b *basicDisplay) Started(lambdaName string) {
-	fmt.Printf("🔨 Building %s...\n", lambdaName)
+	fmt.Printf(b.action.InProgress, lambdaName)
 }
 
 func (b *basicDisplay) Completed(lambdaName string, wasSuccessful bool) {
 	if wasSuccessful {
-		fmt.Printf("✅ Successfully built %s\n", lambdaName)
+		fmt.Printf(b.action.Success, lambdaName)
 	} else {
-		fmt.Printf("❌ Error building %s\n", lambdaName)
+		fmt.Printf(b.action.Error, lambdaName)
 	}
 }
