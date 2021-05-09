@@ -15,4 +15,4 @@ fmt:
 	go fmt ./...
 
 fmt-ci:
-	! go fmt ./... 2>&1 | read 2>/dev/null
+	if [ -z $$( go fmt ./... ) ]; then exit 0; else exit 1; fi
