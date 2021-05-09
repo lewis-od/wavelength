@@ -40,13 +40,14 @@ func TestBuildAndUploadService_Run(t *testing.T) {
 		orchestrator.On(
 			"UploadLambdas",
 			version, bucketName, lambdas,
-		).Return(nil)
+		).Return(make([]*builder.BuildResult, 0, 0))
 
 		finder.On("FindLambdas", lambdas).Return(lambdas, nil)
 		finder.On("FindArtifactBucketName").Return(bucketName, nil)
 
 		printer.On("Printlnf", mock.Anything, mock.Anything).Return()
 		printer.On("Printlnf", mock.Anything, mock.Anything, mock.Anything).Return()
+		printer.On("Println", mock.Anything).Return()
 
 		command.Run(version, lambdas, false)
 
@@ -57,13 +58,14 @@ func TestBuildAndUploadService_Run(t *testing.T) {
 		orchestrator.On(
 			"UploadLambdas",
 			version, bucketName, lambdas,
-		).Return(nil)
+		).Return(make([]*builder.BuildResult, 0, 0))
 
 		finder.On("FindLambdas", lambdas).Return(lambdas, nil)
 		finder.On("FindArtifactBucketName").Return(bucketName, nil)
 
 		printer.On("Printlnf", mock.Anything, mock.Anything).Return()
 		printer.On("Printlnf", mock.Anything, mock.Anything, mock.Anything).Return()
+		printer.On("Println", mock.Anything).Return()
 
 		command.Run(version, lambdas, true)
 

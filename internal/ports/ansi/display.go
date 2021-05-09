@@ -55,7 +55,7 @@ func (d *ansiDisplay) Completed(lambdaName string, wasSuccessful bool) {
 
 	message := ""
 	if wasSuccessful {
-		message = fmt.Sprintf("✅  Building %s... done", lambdaName)
+		message = fmt.Sprintf("✅ Building %s... done", lambdaName)
 	} else {
 		message = fmt.Sprintf("❌ Building %s... error", lambdaName)
 	}

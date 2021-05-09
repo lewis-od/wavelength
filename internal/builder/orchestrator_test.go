@@ -91,14 +91,43 @@ func TestOrchestrator(t *testing.T) {
 	t.Run("UploadLambdas", func(t *testing.T) {
 		version := "version"
 		bucketName := "bucketName"
-		setupTest()
 
-		mockUploader.On("UploadLambda", version, bucketName, "one", "lambdas/one/dist/one.zip").Return(nil)
-		mockUploader.On("UploadLambda", version, bucketName, "two", "lambdas/two/dist/two.zip").Return(nil)
+		t.Run("Success", func(t *testing.T) {
+			setupTest()
 
-		err := orchestrator.UploadLambdas(version, bucketName, lambdas)
+			successResult := &builder.BuildResult{
+				LambdaName: "one",
+				Error:      nil,
+				Output:     []byte(""),
+			}
+			mockUploader.On("UploadLambda", version, bucketName, "one", "lambdas/one/dist/one.zip").Return(successResult)
+			mockUploader.On("UploadLambda", version, bucketName, "two", "lambdas/two/dist/two.zip").Return(successResult)
 
-		assert.Nil(t, err)
-		assertExpectationsOnMocks(t)
+			failedUploads := orchestrator.UploadLambdas(version, bucketName, lambdas)
+
+			assert.Empty(t, failedUploads)
+			assertExpectationsOnMocks(t)
+		})
+		t.Run("Error", func(t *testing.T) {
+			setupTest()
+
+			successResult := &builder.BuildResult{
+				LambdaName: "one",
+				Error:      nil,
+				Output:     []byte(""),
+			}
+			errorResult := &builder.BuildResult{
+				LambdaName: "two",
+				Error:      fmt.Errorf("error uploading"),
+				Output:     []byte(""),
+			}
+			mockUploader.On("UploadLambda", version, bucketName, "one", "lambdas/one/dist/one.zip").Return(successResult)
+			mockUploader.On("UploadLambda", version, bucketName, "two", "lambdas/two/dist/two.zip").Return(errorResult)
+
+			failedUploads := orchestrator.UploadLambdas(version, bucketName, lambdas)
+
+			assert.Contains(t, failedUploads, errorResult)
+			assertExpectationsOnMocks(t)
+		})
 	})
 }

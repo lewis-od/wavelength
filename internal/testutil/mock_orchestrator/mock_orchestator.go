@@ -14,7 +14,7 @@ func (m *MockOrchestrator) BuildLambdas(lambdas []string) []*builder.BuildResult
 	return args.Get(0).([]*builder.BuildResult)
 }
 
-func (m *MockOrchestrator) UploadLambdas(version, bucketName string, lambdas []string) error {
+func (m *MockOrchestrator) UploadLambdas(version, bucketName string, lambdas []string) []*builder.BuildResult {
 	args := m.Called(version, bucketName, lambdas)
-	return args.Error(0)
+	return args.Get(0).([]*builder.BuildResult)
 }
