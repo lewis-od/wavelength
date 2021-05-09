@@ -16,6 +16,9 @@ jobs:
         with:
           go-version: '1.15.5'
 
+      - name: "Validate format"
+        run: "! go fmt ./... 2>&1 | read"
+
       - name: "Run tests"
         run: make test
 
