@@ -2,10 +2,8 @@ package service_test
 
 import (
 	"fmt"
+	"github.com/lewis-od/wavelength/internal/mocks"
 	"github.com/lewis-od/wavelength/internal/service"
-	"github.com/lewis-od/wavelength/internal/testutil/mock_finder"
-	"github.com/lewis-od/wavelength/internal/testutil/mock_printer"
-	"github.com/lewis-od/wavelength/internal/testutil/mock_updater"
 	"github.com/stretchr/testify/mock"
 	"testing"
 )
@@ -18,15 +16,15 @@ func TestUpdateService_Run(t *testing.T) {
 	lambdas := []string{lambdaOne, lambdaTwo}
 	bucketName := "my-bucket"
 
-	var finder *mock_finder.MockFinder
-	var updater *mock_updater.MockUpdater
-	var printer *mock_printer.MockPrinter
+	var finder *mocks.MockFinder
+	var updater *mocks.MockUpdater
+	var printer *mocks.MockPrinter
 	var updateService service.UpdateService
 
 	setupTest := func() {
-		finder = new(mock_finder.MockFinder)
-		updater = new(mock_updater.MockUpdater)
-		printer = new(mock_printer.MockPrinter)
+		finder = new(mocks.MockFinder)
+		updater = new(mocks.MockUpdater)
+		printer = new(mocks.MockPrinter)
 		updateService = service.NewUpdateService(finder, updater, printer, &projectName)
 	}
 

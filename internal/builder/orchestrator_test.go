@@ -3,11 +3,8 @@ package builder_test
 import (
 	"fmt"
 	"github.com/lewis-od/wavelength/internal/builder"
+	"github.com/lewis-od/wavelength/internal/mocks"
 	"github.com/lewis-od/wavelength/internal/progress"
-	"github.com/lewis-od/wavelength/internal/testutil/mock_builder"
-	"github.com/lewis-od/wavelength/internal/testutil/mock_display"
-	"github.com/lewis-od/wavelength/internal/testutil/mock_printer"
-	"github.com/lewis-od/wavelength/internal/testutil/mock_uploader"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"testing"
@@ -16,17 +13,17 @@ import (
 func TestOrchestrator(t *testing.T) {
 	lambdas := []string{"one", "two"}
 
-	var mockBuilder *mock_builder.MockBuilder
-	var mockUploader *mock_uploader.MockUploader
-	var mockDisplay *mock_display.MockDisplay
-	var mockPrinter *mock_printer.MockPrinter
+	var mockBuilder *mocks.MockBuilder
+	var mockUploader *mocks.MockUploader
+	var mockDisplay *mocks.MockDisplay
+	var mockPrinter *mocks.MockPrinter
 	var orchestrator builder.Orchestrator
 
 	setupTest := func() {
-		mockBuilder = new(mock_builder.MockBuilder)
-		mockUploader = new(mock_uploader.MockUploader)
-		mockDisplay = new(mock_display.MockDisplay)
-		mockPrinter = new(mock_printer.MockPrinter)
+		mockBuilder = new(mocks.MockBuilder)
+		mockUploader = new(mocks.MockUploader)
+		mockDisplay = new(mocks.MockDisplay)
+		mockPrinter = new(mocks.MockPrinter)
 		mockPrinter.On("Printlnf", mock.Anything, mock.Anything).Return()
 		mockPrinter.On("Println", mock.Anything).Return()
 		orchestrator = builder.NewOrchestrator(mockBuilder, mockUploader, mockDisplay, mockPrinter)

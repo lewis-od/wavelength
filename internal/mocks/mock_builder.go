@@ -1,4 +1,4 @@
-package mock_builder
+package mocks
 
 import (
 	"github.com/lewis-od/wavelength/internal/builder"

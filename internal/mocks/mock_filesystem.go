@@ -1,4 +1,4 @@
-package mock_filesystem
+package mocks
 
 import (
 	"github.com/lewis-od/wavelength/internal/io"

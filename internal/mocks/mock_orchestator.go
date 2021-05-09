@@ -1,4 +1,4 @@
-package mock_orchestrator
+package mocks
 
 import (
 	"github.com/lewis-od/wavelength/internal/builder"

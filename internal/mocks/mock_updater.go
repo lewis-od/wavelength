@@ -1,4 +1,4 @@
-package mock_updater
+package mocks
 
 import "github.com/stretchr/testify/mock"
 

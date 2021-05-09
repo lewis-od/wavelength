@@ -1,4 +1,4 @@
-package mock_executor
+package mocks
 
 import (
 	"github.com/lewis-od/wavelength/internal/executor"

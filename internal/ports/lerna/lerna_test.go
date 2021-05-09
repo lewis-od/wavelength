@@ -3,8 +3,8 @@ package lerna_test
 import (
 	"github.com/lewis-od/wavelength/internal/builder"
 	"github.com/lewis-od/wavelength/internal/executor"
+	"github.com/lewis-od/wavelength/internal/mocks"
 	"github.com/lewis-od/wavelength/internal/ports/lerna"
-	"github.com/lewis-od/wavelength/internal/testutil/mock_executor"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -16,7 +16,7 @@ func TestBuildLambda(t *testing.T) {
 	expectedContext := &executor.CommandContext{Directory: "."}
 
 	buildOutput := []byte("output")
-	mockExecutor := new(mock_executor.MockExecutor)
+	mockExecutor := new(mocks.MockExecutor)
 	mockExecutor.On(
 		"ExecuteAndCapture",
 		[]string{"run", "build", "--scope", "@project/lambda", "--include-dependencies"},
