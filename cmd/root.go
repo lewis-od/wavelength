@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/lambda"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/lewis-od/wavelength/internal/builder"
 	"github.com/lewis-od/wavelength/internal/find"
 	"github.com/lewis-od/wavelength/internal/ports/ansi"
@@ -36,7 +37,8 @@ var tfExec = terraform.NewTerraform(system.NewExecutor("terraform"))
 var filesystem = system.NewFilesystem()
 var orchestrator = builder.NewOrchestrator(lernaBuilder, lambdaUploader, createDisplay(), printer)
 var finder = find.NewLambdaFinder(filesystem, tfExec, &lambdasDir, &artifactStorageComponent, &bucketOutputName)
-var updater = aws.NewLambdaUpdater(newLambdaClient(awsContext), awsContext)
+var assumeRoleProviderFactory = aws.NewAssumeRoleProviderFactory(newStsClient(awsContext))
+var updater = aws.NewLambdaUpdater(newLambdaClient(awsContext), assumeRoleProviderFactory, awsContext)
 
 func createDisplay() progress.BuildDisplay {
 	if ansi.StdoutIsTerminal() {
@@ -62,6 +64,15 @@ func newLambdaClient(ctx context.Context) *lambda.Client {
 	}
 
 	return lambda.NewFromConfig(cfg)
+}
+
+func newStsClient(ctx context.Context) *sts.Client {
+	cfg, err := config.LoadDefaultConfig(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	return sts.NewFromConfig(cfg)
 }
 
 var rootCmd = &cobra.Command{

@@ -49,7 +49,8 @@ func (u *updateService) Run(version string, lambdaNames []string) {
 
 		u.printer.Printlnf("⬆️ Updating %s with code at s3://%s/%s", lambda, artifactBucket, artifactLocation)
 
-		err := u.updater.UpdateCode(lambda, artifactBucket, artifactLocation)
+		// TODO: Pass role when provided
+		err := u.updater.UpdateCode(lambda, artifactBucket, artifactLocation, nil)
 		if err != nil {
 			u.printer.PrintErr(err)
 			return

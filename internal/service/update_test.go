@@ -44,8 +44,9 @@ func TestUpdateService_Run(t *testing.T) {
 		printer.On("Printlnf", "✅ Successfully updated %s", []interface{}{lambdaOne}).Return()
 		printer.On("Printlnf", "✅ Successfully updated %s", []interface{}{lambdaTwo}).Return()
 
-		updater.On("UpdateCode", lambdaOne, bucketName, "version/one.zip").Return(nil)
-		updater.On("UpdateCode", lambdaTwo, bucketName, "version/two.zip").Return(nil)
+		// TODO: Last arg should be nil
+		updater.On("UpdateCode", lambdaOne, bucketName, "version/one.zip", mock.Anything).Return(nil)
+		updater.On("UpdateCode", lambdaTwo, bucketName, "version/two.zip", mock.Anything).Return(nil)
 
 		updateService.Run(version, lambdas)
 
@@ -57,7 +58,8 @@ func TestUpdateService_Run(t *testing.T) {
 		finder.On("FindArtifactBucketName").Return(bucketName, nil)
 
 		uploadErr := fmt.Errorf("error updating lambda")
-		updater.On("UpdateCode", lambdaOne, bucketName, "version/one.zip").Return(uploadErr)
+		// TODO: Last arg should be nil
+		updater.On("UpdateCode", lambdaOne, bucketName, "version/one.zip", mock.Anything).Return(uploadErr)
 
 		printer.On(
 			"Printlnf",
