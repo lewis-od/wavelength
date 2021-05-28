@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	aws2 "github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/lambda"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -32,13 +33,14 @@ var lambdasDir string
 var printer = stdout.NewPrinter()
 var lernaBuilder = lerna.NewLerna(system.NewExecutor("lerna"), &projectName)
 var awsContext = context.Background()
-var lambdaUploader = aws.NewS3Uploader(newS3Client(awsContext), awsContext)
+var awsConfig = loadAwsConfig(awsContext)
+var lambdaUploader = aws.NewS3Uploader(s3.NewFromConfig(awsConfig), awsContext)
 var tfExec = terraform.NewTerraform(system.NewExecutor("terraform"))
 var filesystem = system.NewFilesystem()
 var orchestrator = builder.NewOrchestrator(lernaBuilder, lambdaUploader, createDisplay(), printer)
 var finder = find.NewLambdaFinder(filesystem, tfExec, &lambdasDir, &artifactStorageComponent, &bucketOutputName)
-var assumeRoleProviderFactory = aws.NewAssumeRoleProviderFactory(newStsClient(awsContext))
-var updater = aws.NewLambdaUpdater(newLambdaClient(awsContext), assumeRoleProviderFactory, awsContext)
+var assumeRoleProviderFactory = aws.NewAssumeRoleProviderFactory(sts.NewFromConfig(awsConfig))
+var updater = aws.NewLambdaUpdater(lambda.NewFromConfig(awsConfig), assumeRoleProviderFactory, awsContext)
 
 func createDisplay() progress.BuildDisplay {
 	if ansi.StdoutIsTerminal() {
@@ -48,31 +50,12 @@ func createDisplay() progress.BuildDisplay {
 	}
 }
 
-func newS3Client(ctx context.Context) *s3.Client {
+func loadAwsConfig(ctx context.Context) aws2.Config {
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		panic(err)
 	}
-
-	return s3.NewFromConfig(cfg)
-}
-
-func newLambdaClient(ctx context.Context) *lambda.Client {
-	cfg, err := config.LoadDefaultConfig(ctx)
-	if err != nil {
-		panic(err)
-	}
-
-	return lambda.NewFromConfig(cfg)
-}
-
-func newStsClient(ctx context.Context) *sts.Client {
-	cfg, err := config.LoadDefaultConfig(ctx)
-	if err != nil {
-		panic(err)
-	}
-
-	return sts.NewFromConfig(cfg)
+	return cfg
 }
 
 var rootCmd = &cobra.Command{
