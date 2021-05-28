@@ -9,7 +9,7 @@ type MockUpdater struct {
 	mock.Mock
 }
 
-func (m *MockUpdater) UpdateCode(lambdaName, bucketName, bucketKey string, role *builder.AssumeRole) error {
+func (m *MockUpdater) UpdateCode(lambdaName, bucketName, bucketKey string, role *builder.Role) error {
 	args := m.Called(lambdaName, bucketName, bucketKey, role)
 	return args.Error(0)
 }

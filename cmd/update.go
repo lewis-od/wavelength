@@ -1,12 +1,15 @@
 package cmd
 
 import (
+	"github.com/lewis-od/wavelength/internal/builder"
 	"github.com/lewis-od/wavelength/internal/service"
 
 	"github.com/spf13/cobra"
 )
 
 var updateService = service.NewUpdateService(finder, updater, printer, &projectName)
+
+var roleId = ""
 
 var updateCmd = &cobra.Command{
 	Use:   "update [version] [lambdas to build]",
@@ -16,10 +19,15 @@ var updateCmd = &cobra.Command{
 If no lambdas are specified, all will be updated.`,
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		updateService.Run(args[0], args[1:])
+		roleToAssume := &builder.Role{RoleID: roleId}
+		if roleId == "" {
+			roleToAssume = nil
+		}
+		updateService.Run(args[0], args[1:], roleToAssume)
 	},
 }
 
 func init() {
+	updateCmd.PersistentFlags().StringVarP(&roleId, "assume-role", "a", "", "AWS role to assume")
 	rootCmd.AddCommand(updateCmd)
 }

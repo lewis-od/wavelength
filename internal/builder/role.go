@@ -1,5 +1,5 @@
 package builder
 
-type AssumeRole struct {
+type Role struct {
 	RoleID string
 }

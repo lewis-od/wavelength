@@ -30,7 +30,7 @@ func NewLambdaUpdater(
 	}
 }
 
-func (l *lambdaUpdater) UpdateCode(lambdaName, bucketName, bucketKey string, role *builder.AssumeRole) error {
+func (l *lambdaUpdater) UpdateCode(lambdaName, bucketName, bucketKey string, role *builder.Role) error {
 	input := &lambda.UpdateFunctionCodeInput{
 		FunctionName: &lambdaName,
 		S3Bucket:     &bucketName,
