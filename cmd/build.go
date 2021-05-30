@@ -16,7 +16,7 @@ var buildCmd = &cobra.Command{
 If no lambdas are specified, all will be built and uploaded.`,
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		buildAndRun.Run(args[0], args[1:], *noBuild, &roleToAssume)
+		buildAndRun.Run(args[0], args[1:], *noBuild, getRole())
 	},
 }
 

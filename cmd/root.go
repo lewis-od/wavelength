@@ -111,3 +111,10 @@ func setFromConfig(holder *string, key string, required bool) {
 	}
 	*holder = value
 }
+
+func getRole() *builder.Role {
+	if roleToAssume.RoleID == "" {
+		return nil
+	}
+	return &roleToAssume
+}
