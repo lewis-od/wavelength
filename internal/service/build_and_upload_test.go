@@ -13,6 +13,7 @@ func TestBuildAndUploadService_Run(t *testing.T) {
 	version := "version"
 	lambdas := []string{"one", "two"}
 	bucketName := "some-bucket"
+	role := &builder.Role{RoleID: "my-role"}
 
 	var orchestrator *mocks.MockOrchestrator
 	var finder *mocks.MockFinder
@@ -38,7 +39,7 @@ func TestBuildAndUploadService_Run(t *testing.T) {
 		).Return(make([]*builder.BuildResult, 0, 0))
 		orchestrator.On(
 			"UploadLambdas",
-			version, bucketName, lambdas,
+			version, bucketName, lambdas, role,
 		).Return(make([]*builder.BuildResult, 0, 0))
 
 		finder.On("FindLambdas", lambdas).Return(lambdas, nil)
@@ -48,7 +49,7 @@ func TestBuildAndUploadService_Run(t *testing.T) {
 		printer.On("Printlnf", mock.Anything, mock.Anything, mock.Anything).Return()
 		printer.On("Println", mock.Anything).Return()
 
-		command.Run(version, lambdas, false)
+		command.Run(version, lambdas, false, role)
 
 		assertExpectationsOnMocks(t)
 	})
@@ -56,7 +57,7 @@ func TestBuildAndUploadService_Run(t *testing.T) {
 		setupTest()
 		orchestrator.On(
 			"UploadLambdas",
-			version, bucketName, lambdas,
+			version, bucketName, lambdas, role,
 		).Return(make([]*builder.BuildResult, 0, 0))
 
 		finder.On("FindLambdas", lambdas).Return(lambdas, nil)
@@ -66,7 +67,7 @@ func TestBuildAndUploadService_Run(t *testing.T) {
 		printer.On("Printlnf", mock.Anything, mock.Anything, mock.Anything).Return()
 		printer.On("Println", mock.Anything).Return()
 
-		command.Run(version, lambdas, true)
+		command.Run(version, lambdas, true, role)
 
 		assertExpectationsOnMocks(t)
 	})
@@ -87,7 +88,7 @@ func TestBuildAndUploadService_Run(t *testing.T) {
 		errToPrint := fmt.Errorf("Error building lambda %s\n%s\n", "lambda-one", "output")
 		printer.On("PrintErr", errToPrint).Return()
 
-		command.Run(version, lambdas, false)
+		command.Run(version, lambdas, false, role)
 
 		assertExpectationsOnMocks(t)
 	})
@@ -101,7 +102,7 @@ func TestBuildAndUploadService_Run(t *testing.T) {
 		printer.On("Printlnf", "🏗  Orchestrating upload of version %s of %s", []interface{}{version, lambdas}).Return()
 		printer.On("PrintErr", finderErr).Return()
 
-		command.Run(version, lambdas, false)
+		command.Run(version, lambdas, false, role)
 
 		assertExpectationsOnMocks(t)
 	})
@@ -113,7 +114,7 @@ func TestBuildAndUploadService_Run(t *testing.T) {
 
 		printer.On("PrintErr", finderErr).Return()
 
-		command.Run(version, lambdas, false)
+		command.Run(version, lambdas, false, role)
 
 		assertExpectationsOnMocks(t)
 	})

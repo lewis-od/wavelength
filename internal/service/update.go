@@ -8,7 +8,7 @@ import (
 )
 
 type UpdateService interface {
-	Run(version string, lambdaNames []string)
+	Run(version string, lambdaNames []string, roleToAssume *builder.Role)
 }
 
 func NewUpdateService(
@@ -31,7 +31,7 @@ type updateService struct {
 	projectName *string
 }
 
-func (u *updateService) Run(version string, lambdaNames []string) {
+func (u *updateService) Run(version string, lambdaNames []string, roleToAssume *builder.Role) {
 	lambdasToUpdate, err := u.finder.FindLambdas(lambdaNames)
 	if err != nil {
 		u.printer.PrintErr(err)
@@ -49,7 +49,7 @@ func (u *updateService) Run(version string, lambdaNames []string) {
 
 		u.printer.Printlnf("⬆️ Updating %s with code at s3://%s/%s", lambda, artifactBucket, artifactLocation)
 
-		err := u.updater.UpdateCode(lambda, artifactBucket, artifactLocation)
+		err := u.updater.UpdateCode(lambda, artifactBucket, artifactLocation, roleToAssume)
 		if err != nil {
 			u.printer.PrintErr(err)
 			return

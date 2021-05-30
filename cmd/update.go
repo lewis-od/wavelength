@@ -16,7 +16,7 @@ var updateCmd = &cobra.Command{
 If no lambdas are specified, all will be updated.`,
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		updateService.Run(args[0], args[1:])
+		updateService.Run(args[0], args[1:], getRole())
 	},
 }
 

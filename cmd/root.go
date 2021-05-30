@@ -3,9 +3,11 @@ package cmd
 import (
 	"context"
 	"fmt"
+	aws2 "github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/lambda"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/lewis-od/wavelength/internal/builder"
 	"github.com/lewis-od/wavelength/internal/find"
 	"github.com/lewis-od/wavelength/internal/ports/ansi"
@@ -20,7 +22,9 @@ import (
 	"os"
 )
 
+// Global flags
 var configFile string
+var roleToAssume = builder.Role{RoleID: ""}
 
 // Loaded from config
 var projectName string
@@ -31,12 +35,14 @@ var lambdasDir string
 var printer = stdout.NewPrinter()
 var lernaBuilder = lerna.NewLerna(system.NewExecutor("lerna"), &projectName)
 var awsContext = context.Background()
-var lambdaUploader = aws.NewS3Uploader(newS3Client(awsContext), awsContext)
+var awsConfig = loadAwsConfig(awsContext)
+var roleProviderFactory = aws.NewAssumeRoleProviderFactory(sts.NewFromConfig(awsConfig))
+var lambdaUploader = aws.NewS3Uploader(s3.NewFromConfig(awsConfig), roleProviderFactory, awsContext)
 var tfExec = terraform.NewTerraform(system.NewExecutor("terraform"))
 var filesystem = system.NewFilesystem()
 var orchestrator = builder.NewOrchestrator(lernaBuilder, lambdaUploader, createDisplay(), printer)
 var finder = find.NewLambdaFinder(filesystem, tfExec, &lambdasDir, &artifactStorageComponent, &bucketOutputName)
-var updater = aws.NewLambdaUpdater(newLambdaClient(awsContext), awsContext)
+var updater = aws.NewLambdaUpdater(lambda.NewFromConfig(awsConfig), roleProviderFactory, awsContext)
 
 func createDisplay() progress.BuildDisplay {
 	if ansi.StdoutIsTerminal() {
@@ -46,22 +52,12 @@ func createDisplay() progress.BuildDisplay {
 	}
 }
 
-func newS3Client(ctx context.Context) *s3.Client {
+func loadAwsConfig(ctx context.Context) aws2.Config {
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		panic(err)
 	}
-
-	return s3.NewFromConfig(cfg)
-}
-
-func newLambdaClient(ctx context.Context) *lambda.Client {
-	cfg, err := config.LoadDefaultConfig(ctx)
-	if err != nil {
-		panic(err)
-	}
-
-	return lambda.NewFromConfig(cfg)
+	return cfg
 }
 
 var rootCmd = &cobra.Command{
@@ -75,7 +71,8 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().StringVar(&configFile, "config", "", "Config file to use")
+	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "", "Config file to use")
+	rootCmd.PersistentFlags().StringVarP(&roleToAssume.RoleID, "assume-role", "a", "", "AWS role to assume")
 }
 
 func initConfig() {
@@ -113,4 +110,11 @@ func setFromConfig(holder *string, key string, required bool) {
 		os.Exit(1)
 	}
 	*holder = value
+}
+
+func getRole() *builder.Role {
+	if roleToAssume.RoleID == "" {
+		return nil
+	}
+	return &roleToAssume
 }

@@ -2,6 +2,7 @@ package service_test
 
 import (
 	"fmt"
+	"github.com/lewis-od/wavelength/internal/builder"
 	"github.com/lewis-od/wavelength/internal/mocks"
 	"github.com/lewis-od/wavelength/internal/service"
 	"github.com/stretchr/testify/mock"
@@ -15,6 +16,7 @@ func TestUpdateService_Run(t *testing.T) {
 	lambdaTwo := "two"
 	lambdas := []string{lambdaOne, lambdaTwo}
 	bucketName := "my-bucket"
+	roleToAssume := &builder.Role{RoleID: "my-role"}
 
 	var finder *mocks.MockFinder
 	var updater *mocks.MockUpdater
@@ -44,10 +46,10 @@ func TestUpdateService_Run(t *testing.T) {
 		printer.On("Printlnf", "✅ Successfully updated %s", []interface{}{lambdaOne}).Return()
 		printer.On("Printlnf", "✅ Successfully updated %s", []interface{}{lambdaTwo}).Return()
 
-		updater.On("UpdateCode", lambdaOne, bucketName, "version/one.zip").Return(nil)
-		updater.On("UpdateCode", lambdaTwo, bucketName, "version/two.zip").Return(nil)
+		updater.On("UpdateCode", lambdaOne, bucketName, "version/one.zip", roleToAssume).Return(nil)
+		updater.On("UpdateCode", lambdaTwo, bucketName, "version/two.zip", roleToAssume).Return(nil)
 
-		updateService.Run(version, lambdas)
+		updateService.Run(version, lambdas, roleToAssume)
 
 		mock.AssertExpectationsForObjects(t, finder, updater, printer)
 	})
@@ -57,7 +59,7 @@ func TestUpdateService_Run(t *testing.T) {
 		finder.On("FindArtifactBucketName").Return(bucketName, nil)
 
 		uploadErr := fmt.Errorf("error updating lambda")
-		updater.On("UpdateCode", lambdaOne, bucketName, "version/one.zip").Return(uploadErr)
+		updater.On("UpdateCode", lambdaOne, bucketName, "version/one.zip", roleToAssume).Return(uploadErr)
 
 		printer.On(
 			"Printlnf",
@@ -65,7 +67,7 @@ func TestUpdateService_Run(t *testing.T) {
 		).Return()
 		printer.On("PrintErr", uploadErr).Return()
 
-		updateService.Run(version, lambdas)
+		updateService.Run(version, lambdas, roleToAssume)
 
 		mock.AssertExpectationsForObjects(t, finder, updater, printer)
 	})

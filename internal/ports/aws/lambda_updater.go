@@ -13,23 +13,37 @@ type UpdateFunctionCodeApi interface {
 }
 
 type lambdaUpdater struct {
-	client UpdateFunctionCodeApi
-	ctx    context.Context
+	client          UpdateFunctionCodeApi
+	providerFactory AssumeRoleProviderFactory
+	ctx             context.Context
 }
 
-func NewLambdaUpdater(client UpdateFunctionCodeApi, ctx context.Context) builder.Updater {
+func NewLambdaUpdater(
+	client UpdateFunctionCodeApi,
+	providerFactory AssumeRoleProviderFactory,
+	ctx context.Context,
+) builder.Updater {
 	return &lambdaUpdater{
-		client: client,
-		ctx:    ctx,
+		client:          client,
+		providerFactory: providerFactory,
+		ctx:             ctx,
 	}
 }
 
-func (l *lambdaUpdater) UpdateCode(lambdaName, bucketName, bucketKey string) error {
+func (l *lambdaUpdater) UpdateCode(lambdaName, bucketName, bucketKey string, role *builder.Role) error {
 	input := &lambda.UpdateFunctionCodeInput{
 		FunctionName: &lambdaName,
 		S3Bucket:     &bucketName,
 		S3Key:        &bucketKey,
 	}
-	_, err := l.client.UpdateFunctionCode(l.ctx, input)
+
+	optFun := func(options *lambda.Options) {}
+	if role != nil {
+		optFun = func(options *lambda.Options) {
+			options.Credentials = l.providerFactory.CreateProvider(role.RoleID)
+		}
+	}
+
+	_, err := l.client.UpdateFunctionCode(l.ctx, input, optFun)
 	return err
 }

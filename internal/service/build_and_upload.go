@@ -8,7 +8,7 @@ import (
 )
 
 type BuildAndUploadService interface {
-	Run(version string, lambdas []string, skipBuild bool)
+	Run(version string, lambdas []string, skipBuild bool, role *builder.Role)
 }
 
 type buildAndUploadService struct {
@@ -29,7 +29,7 @@ func NewBuildAndUploadService(
 	}
 }
 
-func (c *buildAndUploadService) Run(version string, lambdas []string, skipBuild bool) {
+func (c *buildAndUploadService) Run(version string, lambdas []string, skipBuild bool, role *builder.Role) {
 	lambdasToUpload, err := c.finder.FindLambdas(lambdas)
 	if err != nil {
 		c.out.PrintErr(err)
@@ -52,7 +52,7 @@ func (c *buildAndUploadService) Run(version string, lambdas []string, skipBuild 
 		}
 	}
 
-	uploadErrors := c.orchestrator.UploadLambdas(version, bucketName, lambdasToUpload)
+	uploadErrors := c.orchestrator.UploadLambdas(version, bucketName, lambdasToUpload, role)
 	if len(uploadErrors) != 0 {
 		c.printUploadErrors(uploadErrors)
 		return
