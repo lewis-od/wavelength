@@ -91,6 +91,7 @@ func TestOrchestrator(t *testing.T) {
 	t.Run("UploadLambdas", func(t *testing.T) {
 		version := "version"
 		bucketName := "bucketName"
+		role := &builder.Role{RoleID: "my-role"}
 
 		t.Run("Success", func(t *testing.T) {
 			setupTest()
@@ -105,8 +106,14 @@ func TestOrchestrator(t *testing.T) {
 				Error:      nil,
 				Output:     []byte(""),
 			}
-			mockUploader.On("UploadLambda", version, bucketName, "one", "lambdas/one/dist/one.zip").Return(successOne)
-			mockUploader.On("UploadLambda", version, bucketName, "two", "lambdas/two/dist/two.zip").Return(successTwo)
+			mockUploader.On(
+				"UploadLambda",
+				version, bucketName, "one", "lambdas/one/dist/one.zip", role,
+			).Return(successOne)
+			mockUploader.On(
+				"UploadLambda",
+				version, bucketName, "two", "lambdas/two/dist/two.zip", role,
+			).Return(successTwo)
 
 			mockDisplay.On("Init", progress.Upload).Return()
 			mockDisplay.On("Started", "one").Return()
@@ -114,7 +121,7 @@ func TestOrchestrator(t *testing.T) {
 			mockDisplay.On("Completed", "one", true).Return()
 			mockDisplay.On("Completed", "two", true).Return()
 
-			failedUploads := orchestrator.UploadLambdas(version, bucketName, lambdas)
+			failedUploads := orchestrator.UploadLambdas(version, bucketName, lambdas, role)
 
 			assert.Empty(t, failedUploads)
 			assertExpectationsOnMocks(t)
@@ -132,8 +139,14 @@ func TestOrchestrator(t *testing.T) {
 				Error:      fmt.Errorf("error uploading"),
 				Output:     []byte(""),
 			}
-			mockUploader.On("UploadLambda", version, bucketName, "one", "lambdas/one/dist/one.zip").Return(successResult)
-			mockUploader.On("UploadLambda", version, bucketName, "two", "lambdas/two/dist/two.zip").Return(errorResult)
+			mockUploader.On(
+				"UploadLambda",
+				version, bucketName, "one", "lambdas/one/dist/one.zip", role,
+			).Return(successResult)
+			mockUploader.On(
+				"UploadLambda",
+				version, bucketName, "two", "lambdas/two/dist/two.zip", role,
+			).Return(errorResult)
 
 			mockDisplay.On("Init", progress.Upload).Return()
 			mockDisplay.On("Started", "one").Return()
@@ -141,7 +154,7 @@ func TestOrchestrator(t *testing.T) {
 			mockDisplay.On("Completed", "one", true).Return()
 			mockDisplay.On("Completed", "two", false).Return()
 
-			failedUploads := orchestrator.UploadLambdas(version, bucketName, lambdas)
+			failedUploads := orchestrator.UploadLambdas(version, bucketName, lambdas, role)
 
 			assert.Contains(t, failedUploads, errorResult)
 			assertExpectationsOnMocks(t)

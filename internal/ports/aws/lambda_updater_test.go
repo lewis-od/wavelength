@@ -87,11 +87,13 @@ func TestLambdaUpdater_UpdateCode_Success(t *testing.T) {
 				optFn(options)
 			}
 		}).Return(&lambda.UpdateFunctionCodeOutput{}, nil)
-		mockProviderFactory.On("CreateProvider", "my-role").Return(&stscreds.AssumeRoleProvider{})
+		roleProvider := &stscreds.AssumeRoleProvider{}
+		mockProviderFactory.On("CreateProvider", "my-role").Return(roleProvider)
 
 		err := updater.UpdateCode(lambdaName, bucketName, bucketKey, &builder.Role{RoleID: "my-role"})
 
 		assert.Nil(t, err)
 		assertExpectationsOnMocks(t)
+		assert.Equal(t, roleProvider, options.Credentials)
 	})
 }

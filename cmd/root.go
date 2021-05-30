@@ -34,13 +34,13 @@ var printer = stdout.NewPrinter()
 var lernaBuilder = lerna.NewLerna(system.NewExecutor("lerna"), &projectName)
 var awsContext = context.Background()
 var awsConfig = loadAwsConfig(awsContext)
-var lambdaUploader = aws.NewS3Uploader(s3.NewFromConfig(awsConfig), awsContext)
+var roleProviderFactory = aws.NewAssumeRoleProviderFactory(sts.NewFromConfig(awsConfig))
+var lambdaUploader = aws.NewS3Uploader(s3.NewFromConfig(awsConfig), roleProviderFactory, awsContext)
 var tfExec = terraform.NewTerraform(system.NewExecutor("terraform"))
 var filesystem = system.NewFilesystem()
 var orchestrator = builder.NewOrchestrator(lernaBuilder, lambdaUploader, createDisplay(), printer)
 var finder = find.NewLambdaFinder(filesystem, tfExec, &lambdasDir, &artifactStorageComponent, &bucketOutputName)
-var assumeRoleProviderFactory = aws.NewAssumeRoleProviderFactory(sts.NewFromConfig(awsConfig))
-var updater = aws.NewLambdaUpdater(lambda.NewFromConfig(awsConfig), assumeRoleProviderFactory, awsContext)
+var updater = aws.NewLambdaUpdater(lambda.NewFromConfig(awsConfig), roleProviderFactory, awsContext)
 
 func createDisplay() progress.BuildDisplay {
 	if ansi.StdoutIsTerminal() {

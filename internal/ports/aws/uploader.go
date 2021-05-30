@@ -15,18 +15,20 @@ type S3PutObjectAPI interface {
 }
 
 type s3Uploader struct {
-	client S3PutObjectAPI
-	ctx    context.Context
+	client              S3PutObjectAPI
+	ctx                 context.Context
+	roleProviderFactory AssumeRoleProviderFactory
 }
 
-func NewS3Uploader(client S3PutObjectAPI, ctx context.Context) builder.Uploader {
+func NewS3Uploader(client S3PutObjectAPI, roleProviderFactor AssumeRoleProviderFactory, ctx context.Context) builder.Uploader {
 	return &s3Uploader{
-		client: client,
-		ctx:    ctx,
+		client:              client,
+		ctx:                 ctx,
+		roleProviderFactory: roleProviderFactor,
 	}
 }
 
-func (s *s3Uploader) UploadLambda(version, bucketName, lambdaName, artifactLocation string) *builder.BuildResult {
+func (s *s3Uploader) UploadLambda(version, bucketName, lambdaName, artifactLocation string, role *builder.Role) *builder.BuildResult {
 	uploadLocation := fmt.Sprintf("%s/%s.zip", version, lambdaName)
 
 	file, err := os.Open(artifactLocation)
@@ -44,7 +46,14 @@ func (s *s3Uploader) UploadLambda(version, bucketName, lambdaName, artifactLocat
 		Key:    &uploadLocation,
 		Body:   file,
 	}
-	_, err = s.client.PutObject(s.ctx, input)
+	optFn := func(*s3.Options) {}
+	if role != nil {
+		roleProvider := s.roleProviderFactory.CreateProvider(role.RoleID)
+		optFn = func(options *s3.Options) {
+			options.Credentials = roleProvider
+		}
+	}
+	_, err = s.client.PutObject(s.ctx, input, optFn)
 	output := ""
 	if err != nil {
 		output = err.Error()

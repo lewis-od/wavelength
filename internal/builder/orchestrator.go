@@ -8,7 +8,7 @@ import (
 
 type Orchestrator interface {
 	BuildLambdas(lambdas []string) []*BuildResult
-	UploadLambdas(version, bucketName string, lambdas []string) []*BuildResult
+	UploadLambdas(version, bucketName string, lambdas []string, role *Role) []*BuildResult
 }
 
 type orchestrator struct {
@@ -57,7 +57,7 @@ func (o *orchestrator) BuildLambdas(lambdas []string) []*BuildResult {
 	return getFailedResults(results)
 }
 
-func (o *orchestrator) UploadLambdas(version, bucketName string, lambdas []string) []*BuildResult {
+func (o *orchestrator) UploadLambdas(version, bucketName string, lambdas []string, role *Role) []*BuildResult {
 	resultChan := make(chan *BuildResult)
 
 	o.display.Init(progress.Upload)
@@ -67,7 +67,7 @@ func (o *orchestrator) UploadLambdas(version, bucketName string, lambdas []strin
 	for _, lambda := range lambdas {
 		go func(lambdaName string) {
 			artifact := fmt.Sprintf("lambdas/%s/dist/%s.zip", lambdaName, lambdaName)
-			resultChan <- o.uploader.UploadLambda(version, bucketName, lambdaName, artifact)
+			resultChan <- o.uploader.UploadLambda(version, bucketName, lambdaName, artifact, role)
 		}(lambda)
 	}
 
