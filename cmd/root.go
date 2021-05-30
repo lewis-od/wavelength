@@ -22,7 +22,9 @@ import (
 	"os"
 )
 
+// Global flags
 var configFile string
+var roleToAssume = builder.Role{RoleID: ""}
 
 // Loaded from config
 var projectName string
@@ -69,7 +71,8 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().StringVar(&configFile, "config", "", "Config file to use")
+	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "", "Config file to use")
+	rootCmd.PersistentFlags().StringVarP(&roleToAssume.RoleID, "assume-role", "a", "", "AWS role to assume")
 }
 
 func initConfig() {
