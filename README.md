@@ -11,7 +11,7 @@ You must have the following installed and on your `$PATH`:
 - Go (I'm using version 1.15.5. I haven't tested any other versions)
 
 ## Installation
-Run `go get github.com/lewis-od/wavelength@v1.0.0`
+Run `go get github.com/lewis-od/wavelength@v1.1.0`
 
 ## How it works
 
