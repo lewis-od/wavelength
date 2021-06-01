@@ -1,4 +1,4 @@
-.PHONY: default clean build test deps fmt fmt-ci
+.PHONY: default clean build test deps docker fmt fmt-ci
 
 default: clean test build
 
@@ -15,6 +15,9 @@ test:
 
 deps:
 	go get ./...
+
+docker:
+	docker build -t wavelength .
 
 fmt:
 	go fmt ./...
