@@ -13,6 +13,8 @@ You must have the following installed and on your `$PATH`:
 ## Installation
 Run `go get github.com/lewis-od/wavelength@v1.1.0`
 
+You can also run in a container using the script at [scripts/wavelength-docker.sh](scripts/wavelength-docker.sh)
+
 ## How it works
 
 Wavelength assumes the application code for all your lambda functions, as well as the Terraform code to deploy them, all
