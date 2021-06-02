@@ -10,7 +10,7 @@ RUN make deps
 COPY . .
 RUN make build
 
-FROM golang:1.15.12
+FROM debian:buster-slim
 
 COPY --from=build /wavelength/dist/wavelength /usr/bin/wavelength
 RUN chmod +x /usr/bin/wavelength
