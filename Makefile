@@ -14,7 +14,7 @@ test:
 	go test -v ./...
 
 deps:
-	go get ./...
+	go mod download
 
 image-name := ghcr.io/lewis-od/wavelength
 image-version := $(shell git describe --tags)
