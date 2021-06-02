@@ -1,4 +1,4 @@
-.PHONY: default clean build test deps docker fmt fmt-ci
+.PHONY: default clean build test deps docker docker-build docker-push fmt fmt-ci
 
 default: clean test build
 
@@ -16,8 +16,15 @@ test:
 deps:
 	go get ./...
 
-docker:
-	docker build -t wavelength .
+image-name := ghcr.io/lewis-od/wavelength
+image-version := $(shell git describe --tags)
+docker: docker-build docker-push
+
+docker-build:
+	docker build -t $(image-name):$(image-version) .
+
+docker-push:
+	docker push $(image-name):$(image-version)
 
 fmt:
 	go fmt ./...
