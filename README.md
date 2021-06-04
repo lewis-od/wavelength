@@ -13,8 +13,6 @@ You must have the following installed and on your `$PATH`:
 ## Installation
 Run `go get github.com/lewis-od/wavelength@v1.1.0`
 
-You can also run in a container using the script at [scripts/wavelength-docker.sh](scripts/wavelength-docker.sh)
-
 ## How it works
 
 Wavelength assumes the application code for all your lambda functions, as well as the Terraform code to deploy them, all
@@ -136,3 +134,14 @@ Where the `version` variable is used to set the `s3_key` for the lambda.
 Running `wavelength update` is not required in this case as the commit SHA will be different each time, so Terraform
 will detect a change to the `s3_key` of the function, and handle updating the lambda for us.
 
+## Docker Image
+The wavelength docker image is designed to be used as a base image or a stage of a multi-stage build:
+```Dockerfile
+FROM ghcr.io/lewis-od/wavelength:v1.1.0 as wavelength
+
+FROM debian:buster-slim
+
+COPY --from=wavelength /wavelength/dist/wavelength /usr/bin/wavelength
+
+# Other stuff here
+```
